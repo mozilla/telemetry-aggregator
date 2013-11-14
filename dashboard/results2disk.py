@@ -88,11 +88,11 @@ class ChannelVersionManager:
         if self.max_filter_id is None:
             def find_max(tree, maxid = 0):
                 m = int(tree['_id'])
-                if m > maxid:
+                if maxid < m:
                     maxid = m
                 for subtree in tree.itervalues():
                     if type(subtree) is dict:
-                        find_max(subtree, maxid)
+                        return find_max(subtree, maxid)
                 return maxid
             self.max_filter_id = find_max(self.filter_tree)
         self.max_filter_id += 1
@@ -176,6 +176,8 @@ class ChannelVersionManager:
                 # if we have a data-array length mismatch, then we purge existing data
                 if length != len(dump['values']):
                     purge_data = True
+                    if metadata.get('length', None) != None:
+                        print dump['values']
                 revision    = dump['revision']
                 buildId     = dump['buildId']
                 length      = len(dump['values'])
@@ -200,9 +202,13 @@ class ChannelVersionManager:
                 os.remove(byBuildDateFileName)
             self.json_to_file(byBuildDateFileName, {})
             self.json_to_file(bySubmissionDateFileName, {})
-            oldlen = metadata.get('length', 0)
-            if oldlen != 0:
+            oldlen = metadata.get('length', None)
+            if oldlen != None:
                 print >> sys.stderr, "Purging data for %s from length %i to %i" % (measure, oldlen, length)
+                print >> sys.stderr, "  old-build: " + metadata.get('buildId', '')
+                print >> sys.stderr, "  new-build: " + buildId
+                print >> sys.stderr, "  old-rev:   " + metadata.get('revision', '')
+                print >> sys.stderr, "  new-rev:   " + revision
 
         # Filename to merge blob into
         filename = measure + "-" + byDateType + ".json"
