@@ -57,3 +57,30 @@ class ResultMergingProcess(Process):
             os.remove(input_path)
             print " - Merged result, % i left" % len(self.path_set)
         self.ctx.output(self.result_path)
+
+def main():
+    p = ArgumentParser(
+        description = 'Merge analysis results to single file',
+        formatter_class = ArgumentDefaultsHelpFormatter
+    )
+    p.add_argument(
+        "-i", "--input-file",
+        help = "Input files to merge to data folder",
+        required = True,
+        nargs = '+'
+    )
+    p.add_argument(
+        "-o", "--output-file",
+        help = "Output file to write data to",
+        required = True
+    )
+
+    cfg = p.parse_args()
+    ctx = ResultContext()
+    for f in cfg.input_file:
+        ctx.merge_result_file(f)
+    ctx.output(cfg.output_file)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

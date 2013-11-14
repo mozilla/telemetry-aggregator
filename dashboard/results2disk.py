@@ -176,8 +176,6 @@ class ChannelVersionManager:
                 # if we have a data-array length mismatch, then we purge existing data
                 if length != len(dump['values']):
                     purge_data = True
-                    if metadata.get('length', None) != None:
-                        print dump['values']
                 revision    = dump['revision']
                 buildId     = dump['buildId']
                 length      = len(dump['values'])
@@ -205,10 +203,6 @@ class ChannelVersionManager:
             oldlen = metadata.get('length', None)
             if oldlen != None:
                 print >> sys.stderr, "Purging data for %s from length %i to %i" % (measure, oldlen, length)
-                print >> sys.stderr, "  old-build: " + metadata.get('buildId', '')
-                print >> sys.stderr, "  new-build: " + buildId
-                print >> sys.stderr, "  old-rev:   " + metadata.get('revision', '')
-                print >> sys.stderr, "  new-rev:   " + revision
 
         # Filename to merge blob into
         filename = measure + "-" + byDateType + ".json"
