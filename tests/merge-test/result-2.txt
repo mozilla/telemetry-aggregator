@@ -1,0 +1,1 @@
+aurora/24/CYCLE_COLLECTOR/by-submission-date	{"20130805/idle_daily/Fennec/Android/16/arm":{"values": [10, 5, 10, -1, -1, -1, -1, -1, 1],"buildId": "20130805004006","revision": "http://hg.mozilla.org/releases/mozilla-aurora/rev/4ea223de889c"}}

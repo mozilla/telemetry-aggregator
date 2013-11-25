@@ -27,8 +27,8 @@ class HistogramAggregator:
         aggregator1.merge(**aggregator2.dump())
     """
     def __init__(self, values = [], buildId = "", revision = None):
-        replace_nan_inf(values)
-        self.values = values
+        self.values = list(values)
+        replace_nan_inf(self.values)
         self.buildId = buildId
         self.revision = revision
 
@@ -37,13 +37,13 @@ class HistogramAggregator:
         if len(self.values) != len(values):
             # Choose the histogram with highest buildId
             if self.buildId < buildId:
-                self.values = values
+                self.values = list(values)
                 self.buildId = buildId
                 self.revision = revision
         else:
             if self.buildId < buildId:
-                self.values = values
                 self.buildId = buildId
+                self.revision = revision
             for i in xrange(0, len(values) - 6):
                 self.values[i] += values[i]
             # Entries [-6:-1] may have -1 indicating missing entry
@@ -76,4 +76,4 @@ def replace_nan_inf(values):
         elif math.isnan(val):
             # this isn't good... but we can't handle all possible corner cases
             # NaN shouldn't be possible... besides it's not known to happen
-            values[i] = null
+            values[i] = None
