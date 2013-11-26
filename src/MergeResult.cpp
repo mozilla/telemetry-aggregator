@@ -25,11 +25,15 @@ using namespace rapidjson;
 int main(int argc, char *argv[]) {
   vector<char*> inputs;
   FILE* output = stdout;
+  bool sorted = false;
 
   // Parse arguments
   int c;
-  while ((c = getopt(argc, argv, "hi:o:")) != -1) {
+  while ((c = getopt(argc, argv, "hsi:o:")) != -1) {
     switch (c) {
+      case 's':
+        sorted = true;
+        break;
       case 'i':
         inputs.push_back(optarg);
         break;
@@ -49,18 +53,31 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Merge input in memory if more than one input file is given
-  if (inputs.size() > 1) {
+  // We can't have multiple sorted inputs
+  if (sorted && inputs.size() > 1) {
+    fprintf(stderr, "We cannot exploited more than one source of sorted input.\n");
+    fprintf(stderr, "You should merge with GNU sort first.\n");
+    exit(1);
+  }
+
+  // Merge input in memory if input isn't sorted
+  if (!sorted) {
     // Input one by one
     ResultSet set;
-    for (auto file : inputs) {
-      ifstream stream(file);
-      set.mergeStream(stream);
+    // If no input are given read from stdin
+    if (inputs.empty()) {
+      cin.sync_with_stdio(false);
+      set.mergeStream(cin);
+    } else {
+      for (auto file : inputs) {
+        ifstream stream(file);
+        set.mergeStream(stream);
+      }
     }
     set.output(output);
 
   } else {
-    // If a single file is given we read from it and output whenever the the
+    // If a single sorted file is given we read from it and output whenever the
     // filePath changes. This will mergeresult of sorted input, hence,
     // perfect when piping in from GNU sort, which can efficiently merge sorted
     // files

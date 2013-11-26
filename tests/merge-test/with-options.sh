@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-echo "got here"
-
 # Merge test files
 ../../mergeresults -i result-1.txt -i result-2.txt -o output.txt;
 

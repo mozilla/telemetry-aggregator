@@ -103,7 +103,8 @@ public:
     // Find child node
     PathNode<Target>* next = nullptr;
     for(auto child : _children) {
-      if(strncmp(child->_value.data(), path, n) == 0) {
+      if (strncmp(child->_value.data(), path, n) == 0 &&
+          strlen(child->_value.data()) == n) {
         next = child;
         break;
       }
