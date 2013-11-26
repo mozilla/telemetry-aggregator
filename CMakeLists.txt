@@ -17,12 +17,19 @@ find_package(LibLZMA REQUIRED)
 enable_testing()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -V)
 
+# Build release with mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=Release ..
+
 set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}   -Wall -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Ofast -flto")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fwhole-program")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
-set(CMAKE_CXX_FLAGS "-std=c++11")
+# Add C++11 support
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+# Ignore local unused typedefs, new in gcc 4.8, causes lots of warnings with
+# rapidjson
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs")
 
 add_subdirectory(src)
 add_subdirectory(tests)
