@@ -182,7 +182,10 @@ class ChannelVersionManager:
 
         # A newer buildId was found
         if update_definition:
-            definition = self.fetch_histgram_definition(measure, revision)
+            try:
+                definition = self.fetch_histgram_definition(measure, revision)
+            except:
+                return;
             self.histograms[measure] = definition
             self.revisions[measure] = {
                 'revision':     revision,

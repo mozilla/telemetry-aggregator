@@ -1,1 +1,5 @@
+Unless otherwise noted, sources are released under:
 http://www.mozilla.org/MPL/2.0/index.txt
+
+Note, that this repository contains bits form external projects, specifically,
+`getRSS.c` and `stringencoders/`, see files for specific licenses.
