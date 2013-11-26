@@ -7,8 +7,6 @@
 using namespace std;
 using namespace rapidjson;
 
-InternedStringContext  MeasureFile::_filterStringCtx;
-
 void MeasureFile::mergeJSON(Value& blob) {
   // For each member
   for (auto it = blob.MemberBegin(); it != blob.MemberEnd(); ++it) {
@@ -47,7 +45,8 @@ void MeasureFile::output(FILE* f, PathNode<MeasureFile>* owner) {
   fputs("}\n", f);
 }
 
-void MeasureFile::output(FILE* f, const std::string& filePath) {
+/** Output to file */
+void MeasureFile::output(FILE* f, const string& filePath) {
   fputs(filePath.data(), f);
   fputs("\t{", f);
 
@@ -57,4 +56,15 @@ void MeasureFile::output(FILE* f, const std::string& filePath) {
   _filterRoot.outputTargetTree(ctx);
 
   fputs("}\n", f);
+}
+
+/** Output to string, allows for better buffering */
+void MeasureFile::output(string& outline, const string& filePath) {
+  outline = filePath;
+  outline += "\t{";
+
+  Aggregate::StringOutputContext ctx(outline, false);
+  _filterRoot.outputTargetTree(ctx);
+
+  outline += "}\n";
 }

@@ -1,6 +1,7 @@
 #include "cache/ResultSet.h"
 #include "cache/MeasureFile.h"
 #include "cache/Aggregate.h"
+#include "cache/InternedString.h"
 
 #include "rapidjson/document.h"
 
@@ -48,8 +49,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // If input files are given read them
-  if (!inputs.empty()) {
+  // Merge input in memory if more than one input file is given
+  if (inputs.size() > 1) {
     // Input one by one
     ResultSet set;
     for (auto file : inputs) {
@@ -59,19 +60,31 @@ int main(int argc, char *argv[]) {
     set.output(output);
 
   } else {
-    // if no input files are given, we read from cin and output whenever the
-    // the filePath changes. This will mergeresult of sorted input, hence,
+    // If a single file is given we read from it and output whenever the the
+    // filePath changes. This will mergeresult of sorted input, hence,
     // perfect when piping in from GNU sort, which can efficiently merge sorted
     // files
-    cin.sync_with_stdio(false);
+    istream* input;
+
+    // If no input file was given at all, we read from stdin
+    if (inputs.empty()) {
+      cin.sync_with_stdio(false);
+      input = &cin;
+    } else {
+      input = new ifstream(inputs[0]);
+    }
 
     // filePath and measureFile currently aggregated
-    string        filePath;
-    MeasureFile*  measureFile = nullptr;
+    string                  filePath;
+    MeasureFile*            measureFile = nullptr;
+    InternedStringContext*  filterStringCtx = nullptr;
 
+    string outline;
+    outline.reserve(10 * 1024 * 1024);
     string line;
+    line.reserve(10 * 1024 * 1024);
     int nb_line = 0;
-    while (getline(cin, line)) {
+    while (getline(*input, line)) {
       nb_line++;
 
       // Find delimiter
@@ -87,9 +100,12 @@ int main(int argc, char *argv[]) {
       // If we're reached a new filePath, output the old one
       if (filePath != currentFilePath) {
         if (measureFile) {
-          measureFile->output(output, filePath);
+          measureFile->output(outline, filePath);
+          fputs(outline.data(), output);
           delete measureFile;
           measureFile = nullptr;
+          delete filterStringCtx;
+          filterStringCtx = nullptr;
         }
         filePath = currentFilePath;
       }
@@ -106,7 +122,8 @@ int main(int argc, char *argv[]) {
 
       // Allocate MeasureFile if not already aggregated
       if (!measureFile) {
-        measureFile = new MeasureFile();
+        filterStringCtx = new InternedStringContext();
+        measureFile = new MeasureFile(*filterStringCtx);
       }
 
       // Merge in JSON
@@ -115,9 +132,12 @@ int main(int argc, char *argv[]) {
 
     // Output last MeasureFile, if there was ever one
     if (measureFile) {
-      measureFile->output(output, filePath);
+      measureFile->output(outline, filePath);
+      fputs(outline.data(), output);
       delete measureFile;
       measureFile = nullptr;
+      delete filterStringCtx;
+      filterStringCtx = nullptr;
     }
   }
 

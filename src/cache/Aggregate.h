@@ -6,6 +6,8 @@
 
 #include "rapidjson/document.h"
 
+#include <string>
+
 /** Representation of histogram aggregate */
 class Aggregate {
   /** Latests revision of aggregated histograms */
@@ -41,8 +43,26 @@ public:
     bool  comma;
   };
 
+  /** Output context that buffers to string */
+  struct StringOutputContext {
+    StringOutputContext(std::string& outline, bool comma)
+     : outline(outline), comma(comma) {}
+    std::string&  outline;
+    bool          comma;
+  };
+
   /** Output to file */
   void output(OutputContext& ctx, PathNode<Aggregate>* owner);
+
+  /** Output to string */
+  void output(StringOutputContext& ctx, PathNode<Aggregate>* owner);
+
+
+  ~Aggregate() {
+    if (_values) {
+      delete[] _values;
+    }
+  }
 };
 
 #endif // AGGREGATE_H

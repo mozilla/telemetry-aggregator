@@ -41,7 +41,7 @@ void ResultSet::mergeStream(istream& stream) {
     // Find blob and merge with it
     PathNode<MeasureFile>* n = _fileRoot.find(filePath.data(), _pathStringCtx);
     if(!n->target()) {
-      n->setTarget(new MeasureFile());
+      n->setTarget(new MeasureFile(_filterStringCtx));
     }
     n->target()->mergeJSON(d);
   }

@@ -12,6 +12,7 @@ class MeasureFile;
 class ResultSet {
   PathNode<MeasureFile> _fileRoot;
   InternedStringContext _pathStringCtx;
+  InternedStringContext _filterStringCtx;
 public:
   /** Merge a result-set file into this ResultSet */
   void mergeStream(std::istream& stream);

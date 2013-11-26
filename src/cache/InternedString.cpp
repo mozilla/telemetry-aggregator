@@ -4,6 +4,8 @@
 
 #include "InternedString.h"
 
+#define UNUSED(x)     (void)(x)
+
 #ifdef LOG_INTERNEDSTRING
 #define log(...)                fprintf(stderr, __VA_ARGS__);
 #else
@@ -23,6 +25,7 @@ void InternedString::releaseBuffer() {
       // Erase from owners cache, if owner is still alive
       if (_buffer->owner) {
         size_t count = _buffer->owner->_cache.erase(_buffer->payload.data());
+        UNUSED(count);
         assert(count == 1);
       }
       log("DEL:         '%s'\n", _buffer->payload.data());

@@ -86,6 +86,9 @@ void Aggregate::mergeJSON(const Value& dump) {
   }
 }
 
+#include "../../stringencoders/modp_numtoa.h"
+
+
 void Aggregate::output(OutputContext& ctx, PathNode<Aggregate>* owner) {
   if (ctx.comma) {
     fputc(',', ctx.file);
@@ -95,17 +98,49 @@ void Aggregate::output(OutputContext& ctx, PathNode<Aggregate>* owner) {
   owner->output(ctx.file);
   fputs("\":{\"values\": [", ctx.file);
   if(_length > 0) {
-    fprintf(ctx.file, "%.20g", _values[0]);
+    char b[64];
+    modp_dtoa2(_values[0], b, 9);
+    fputs(b, ctx.file);
     for(size_t i = 1; i < _length; i++) {
-      fprintf(ctx.file, ",%.20g", _values[i]);
+      modp_dtoa2(_values[i], b, 9);
+      fputc(',', ctx.file);
+      fputs(b, ctx.file);
     }
   }
-  fprintf(ctx.file, "],\"buildId\":\"%s\",\"revision\":\"%s\"}",
-          _buildId.data(), _revision.data());
+  fputs("],\"buildId\":\"", ctx.file);
+  fputs(_buildId.data(), ctx.file);
+  fputs("\",\"revision\":\"", ctx.file);
+  fputs(_revision.data(), ctx.file);
+  fputs("\"}", ctx.file);
 }
 
 
+void Aggregate::output(StringOutputContext& ctx, PathNode<Aggregate>* owner) {
+  if (ctx.comma) {
+    ctx.outline += ",";
+  }
+  ctx.comma = true;
+  ctx.outline += "\"";
+  owner->output(ctx.outline);
+  ctx.outline += "\":{\"values\": [";
 
+  if(_length > 0) {
+    char b[64];
+    modp_dtoa2(_values[0], b, 9);
+    ctx.outline += b;
+    for(size_t i = 1; i < _length; i++) {
+      modp_dtoa2(_values[i], b, 9);
+      ctx.outline += ",";
+      ctx.outline += b;
+    }
+  }
+
+  ctx.outline += "],\"buildId\":\"";
+  ctx.outline += _buildId.data();
+  ctx.outline += "\",\"revision\":\"";
+  ctx.outline += _revision.data();
+  ctx.outline += "\"}";
+}
 
 
 

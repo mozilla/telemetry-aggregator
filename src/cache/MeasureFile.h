@@ -17,8 +17,11 @@ class Aggregate;
  */
 class MeasureFile {
   PathNode<Aggregate>           _filterRoot;
-  static InternedStringContext  _filterStringCtx;
+  InternedStringContext&        _filterStringCtx;
 public:
+  MeasureFile(InternedStringContext& filterStringCtx)
+   : _filterStringCtx(filterStringCtx) {}
+
   /** Merge with JSON from file */
   void mergeJSON(rapidjson::Value& blob);
 
@@ -27,6 +30,7 @@ public:
 
   /** Output to file */
   void output(FILE* f, const std::string& filePath);
+  void output(std::string& outline, const std::string& filePath);
 };
 
 #endif // MEASUREFILE_H

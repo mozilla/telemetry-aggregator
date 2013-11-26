@@ -57,6 +57,7 @@ public:
     if(_buffer) {
       _buffer->refCount++;
     }
+    return *this;
   }
 
   /** Compare two InternedStrings */

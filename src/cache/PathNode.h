@@ -69,6 +69,15 @@ public:
     _value.output(f);
   }
 
+  /** Write Path to string */
+  void output(std::string& outline) {
+    if(_parent && _parent->_parent) {
+      _parent->output(outline);
+      outline += "/";
+    }
+    outline += _value.data();
+  }
+
   /** Invoke output(ctx, parent) on the entire target tree */
   template<typename Context>
   void outputTargetTree(Context& ctx) {
