@@ -7,10 +7,11 @@ set_property(DIRECTORY PROPERTY EP_BASE "${CMAKE_BINARY_DIR}/externals")
 
 externalproject_add(
     rapidjson
-    SVN_REPOSITORY http://rapidjson.googlecode.com/svn/trunk/
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
+    SVN_REPOSITORY      http://rapidjson.googlecode.com/svn/trunk/
+    SVN_REVISION        "-r131"
+    CONFIGURE_COMMAND   ""
+    BUILD_COMMAND       ""
+    INSTALL_COMMAND     ""
 )
 
 set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/externals/Source/rapidjson/include")
