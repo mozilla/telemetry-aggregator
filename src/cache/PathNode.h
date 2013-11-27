@@ -92,6 +92,19 @@ public:
     }
   }
 
+  template<typename Functor>
+  void visitTargetTree(Functor& callback) {
+    // If we have a target, visit it
+    if(_target) {
+      callback(_target, this);
+    }
+
+    // Call recursively on children
+    for(auto child : _children) {
+      child->visitTargetTree(callback);
+    }
+  }
+
   /** Find/create PathNode under current node */
   PathNode* find(const char* path, InternedStringContext& ctx) {
     const char* reminder = path;

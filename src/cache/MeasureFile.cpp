@@ -25,10 +25,6 @@ void MeasureFile::mergeJSON(Value& blob) {
       n->setTarget(new Aggregate());
     }
     n->target()->mergeJSON(it->value);
-
-    #if FIRST_DUMP_ONLY
-    break;
-    #endif
   }
 }
 
@@ -67,4 +63,16 @@ void MeasureFile::output(string& outline, const string& filePath) {
   _filterRoot.outputTargetTree(ctx);
 
   outline += "}\n";
+}
+
+/** Output to file */
+void MeasureFile::output(FILE* f) {
+  fputc('{', f);
+
+  Aggregate::OutputContext ctx;
+  ctx.file = f;
+  ctx.comma = false;
+  _filterRoot.outputTargetTree(ctx);
+
+  fputc('}', f);
 }

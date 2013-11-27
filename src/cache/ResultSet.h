@@ -5,14 +5,16 @@
 #include "InternedString.h"
 
 #include <iostream>
+#include <stdio.h>
 
-class MeasureFile;
+class ChannelVersion;
 
 /** A collection of results for various measures files */
 class ResultSet {
-  PathNode<MeasureFile> _fileRoot;
-  InternedStringContext _pathStringCtx;
-  InternedStringContext _filterStringCtx;
+  PathNode<ChannelVersion>  _channelVersionRoot;
+  InternedStringContext     _channelVersionStringCtx;
+  InternedStringContext     _measureStringCtx;
+  InternedStringContext     _filterStringCtx;
 public:
   /** Merge a result-set file into this ResultSet */
   void mergeStream(std::istream& stream);

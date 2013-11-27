@@ -1,4 +1,5 @@
 #include "cache/ResultSet.h"
+#include "cache/ChannelVersion.h"
 #include "cache/MeasureFile.h"
 #include "cache/Aggregate.h"
 #include "cache/InternedString.h"
