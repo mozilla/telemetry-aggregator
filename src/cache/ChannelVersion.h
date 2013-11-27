@@ -24,7 +24,7 @@ public:
   void mergeMeasureJSON(const char* measure, rapidjson::Value& blob);
 
   /** Output to file */
-  void output(FILE* f, PathNode<ChannelVersion>* owner);
+  void output(FILE* f, const std::string& channelVersion);
 };
 
 

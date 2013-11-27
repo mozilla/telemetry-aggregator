@@ -1,5 +1,7 @@
 #include "Aggregate.h"
 
+#include "../../stringencoders/modp_numtoa.h"
+
 #include <stdio.h>
 
 using namespace std;
@@ -86,31 +88,22 @@ void Aggregate::mergeJSON(const Value& dump) {
   }
 }
 
-#include "../../stringencoders/modp_numtoa.h"
-
-
-void Aggregate::output(OutputContext& ctx, PathNode<Aggregate>* owner) {
-  if (ctx.comma) {
-    fputc(',', ctx.file);
-  }
-  ctx.comma = true;
-  fputc('\"', ctx.file);
-  owner->output(ctx.file);
-  fputs("\":{\"values\": [", ctx.file);
+void Aggregate::output(FILE* f) {
+  fputs("{\"values\": [", f);
   if(_length > 0) {
     char b[64];
     modp_dtoa2(_values[0], b, 9);
-    fputs(b, ctx.file);
+    fputs(b, f);
     for(size_t i = 1; i < _length; i++) {
       modp_dtoa2(_values[i], b, 9);
-      fputc(',', ctx.file);
-      fputs(b, ctx.file);
+      fputc(',', f);
+      fputs(b, f);
     }
   }
-  fputs("],\"buildId\":\"", ctx.file);
-  fputs(_buildId.data(), ctx.file);
-  fputs("\",\"revision\":\"", ctx.file);
-  fputs(_revision.data(), ctx.file);
-  fputs("\"}", ctx.file);
+  fputs("],\"buildId\":\"", f);
+  fputs(_buildId.data(), f);
+  fputs("\",\"revision\":\"", f);
+  fputs(_revision.data(), f);
+  fputs("\"}", f);
 }
 

@@ -37,22 +37,8 @@ public:
   /** Merge aggregated values from JSON dump */
   void mergeJSON(const rapidjson::Value& dump);
 
-  /** Output context */
-  struct OutputContext {
-    FILE* file;
-    bool  comma;
-  };
-
-  /** Output context that buffers to string */
-  struct StringOutputContext {
-    StringOutputContext(std::string& outline, bool comma)
-     : outline(outline), comma(comma) {}
-    std::string&  outline;
-    bool          comma;
-  };
-
   /** Output to file */
-  void output(OutputContext& ctx, PathNode<Aggregate>* owner);
+  void output(FILE* f);
 
   ~Aggregate() {
     if (_values) {

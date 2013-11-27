@@ -33,10 +33,21 @@ void MeasureFile::mergeJSON(Value& blob) {
 void MeasureFile::output(FILE* f) {
   fputc('{', f);
 
-  Aggregate::OutputContext ctx;
-  ctx.file = f;
-  ctx.comma = false;
-  _filterRoot.outputTargetTree(ctx);
+  bool first = true;
+  auto write = [&f, &first](Aggregate* aggregate,
+                            PathNode<Aggregate>* parent) -> void {
+    if (first) {
+      first = false;
+    } else {
+      fputc(',', f);
+    }
+    fputc('\"', f);
+    parent->output(f);
+    fputs("\":", f);
+    aggregate->output(f);
+  };
+
+  _filterRoot.visitTargetTree(write);
 
   fputc('}', f);
 }

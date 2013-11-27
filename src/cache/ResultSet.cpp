@@ -40,8 +40,7 @@ void ResultSet::mergeStream(istream& stream) {
 
     // Find filePath
     string channelVersion = line.substr(0, slash);
-    string measure        = line.substr(slash + 1, tab);
-
+    string measure        = line.substr(slash + 1, tab - slash);
 
     // Parse JSON document
     Document d;
@@ -95,5 +94,15 @@ void ResultSet::aggregate(const char* filename) {
 }
 
 void ResultSet::output(FILE* f) {
-  _channelVersionRoot.outputTargetTree(f);
+  string cv;
+  cv.reserve(1024);
+
+  auto write = [&f, &cv](ChannelVersion* channelVersion,
+                         PathNode<ChannelVersion>* parent) -> void {
+    cv.clear();
+    parent->output(cv);
+    channelVersion->output(f, cv);
+  };
+
+  _channelVersionRoot.visitTargetTree(write);
 }

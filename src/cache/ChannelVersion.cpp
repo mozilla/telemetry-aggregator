@@ -16,19 +16,16 @@ void ChannelVersion::mergeMeasureJSON(const char* measure, Value& blob) {
   n->target()->mergeJSON(blob);
 }
 
-void ChannelVersion::output(FILE* f, PathNode<ChannelVersion>* owner) {
-  string cv;
-  owner->output(cv);
-  cv += "/";
-
-  auto out = [&cv, &f](MeasureFile* measure,
-                               PathNode<MeasureFile>* parent) -> void {
-    fputs(cv.data(), f);
+void ChannelVersion::output(FILE* f, const string& channelVersion) {
+  auto write = [&channelVersion, &f](MeasureFile* measure,
+                                     PathNode<MeasureFile>* parent) -> void {
+    fputs(channelVersion.data(), f);
+    fputc('/', f);
     parent->output(f);
     fputc('\t', f);
     measure->output(f);
     fputc('\n', f);
   };
 
-  _measureRoot.visitTargetTree(out);
+  _measureRoot.visitTargetTree(write);
 }

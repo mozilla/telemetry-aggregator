@@ -78,20 +78,7 @@ public:
     outline += _value.data();
   }
 
-  /** Invoke output(ctx, parent) on the entire target tree */
-  template<typename Context>
-  void outputTargetTree(Context& ctx) {
-    // If we have a target, output it
-    if(_target) {
-      _target->output(ctx, this);
-    }
-
-    // Call recursively on children
-    for(auto child : _children) {
-      child->outputTargetTree(ctx);
-    }
-  }
-
+  /** Visit targets in the tree with a lambda function */
   template<typename Functor>
   void visitTargetTree(Functor& callback) {
     // If we have a target, visit it
