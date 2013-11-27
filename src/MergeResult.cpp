@@ -118,8 +118,10 @@ int main(int argc, char *argv[]) {
       // If we're reached a new filePath, output the old one
       if (filePath != currentFilePath) {
         if (measureFile) {
-          measureFile->output(outline, filePath);
-          fputs(outline.data(), output);
+          fputs(filePath.data(), output);
+          fputc('\t', output);
+          measureFile->output(output);
+          fputc('\n', output);
           delete measureFile;
           measureFile = nullptr;
           delete filterStringCtx;
@@ -150,8 +152,10 @@ int main(int argc, char *argv[]) {
 
     // Output last MeasureFile, if there was ever one
     if (measureFile) {
-      measureFile->output(outline, filePath);
-      fputs(outline.data(), output);
+      fputs(filePath.data(), output);
+      fputc('\t', output);
+      measureFile->output(output);
+      fputc('\n', output);
       delete measureFile;
       measureFile = nullptr;
       delete filterStringCtx;

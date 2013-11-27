@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ev
 
 # Merge test files
 ../../mergeresults -i result-1.txt -i result-2.txt -o output.txt;

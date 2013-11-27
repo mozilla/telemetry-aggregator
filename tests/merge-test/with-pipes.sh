@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ev
 
 # Merge test files
 cat result-1.txt result-2.txt | ../../mergeresults > output.txt;
