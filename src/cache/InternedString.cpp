@@ -38,7 +38,7 @@ void InternedString::releaseBuffer() {
   }
 }
 
-const char* InternedString::_emptyString = "";
+const std::string InternedString::_emptyString("");
 
 InternedString InternedStringContext::createString(const char* s) {
   // Empty InternedStrings are a special case

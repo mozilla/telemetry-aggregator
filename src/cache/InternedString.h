@@ -36,7 +36,7 @@ class InternedString {
   void releaseBuffer();
 
   /** Empty string to return when _buffer is null */
-  static const char* _emptyString;
+  static const std::string _emptyString;
 public:
   /** Initialized empty InternedString */
   InternedString()
@@ -98,6 +98,12 @@ public:
   const char* data() const {
     if (_buffer)
       return _buffer->payload.data();
+    return _emptyString.data();
+  }
+
+  const std::string& asString() const {
+    if (_buffer)
+      return _buffer->payload;
     return _emptyString;
   }
 
@@ -164,5 +170,6 @@ public:
 
   friend class InternedString;
 };
+
 
 #endif // INTERNED_STRING_H
