@@ -28,42 +28,6 @@ void MeasureFile::mergeJSON(Value& blob) {
   }
 }
 
-/** Output to file */
-void MeasureFile::output(FILE* f, PathNode<MeasureFile>* owner) {
-  owner->output(f);
-  fputs("\t{", f);
-
-  Aggregate::OutputContext ctx;
-  ctx.file = f;
-  ctx.comma = false;
-  _filterRoot.outputTargetTree(ctx);
-
-  fputs("}\n", f);
-}
-
-/** Output to file */
-void MeasureFile::output(FILE* f, const string& filePath) {
-  fputs(filePath.data(), f);
-  fputs("\t{", f);
-
-  Aggregate::OutputContext ctx;
-  ctx.file = f;
-  ctx.comma = false;
-  _filterRoot.outputTargetTree(ctx);
-
-  fputs("}\n", f);
-}
-
-/** Output to string, allows for better buffering */
-void MeasureFile::output(string& outline, const string& filePath) {
-  outline = filePath;
-  outline += "\t{";
-
-  Aggregate::StringOutputContext ctx(outline, false);
-  _filterRoot.outputTargetTree(ctx);
-
-  outline += "}\n";
-}
 
 /** Output to file */
 void MeasureFile::output(FILE* f) {

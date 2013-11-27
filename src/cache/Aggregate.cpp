@@ -114,35 +114,3 @@ void Aggregate::output(OutputContext& ctx, PathNode<Aggregate>* owner) {
   fputs("\"}", ctx.file);
 }
 
-
-void Aggregate::output(StringOutputContext& ctx, PathNode<Aggregate>* owner) {
-  if (ctx.comma) {
-    ctx.outline += ",";
-  }
-  ctx.comma = true;
-  ctx.outline += "\"";
-  owner->output(ctx.outline);
-  ctx.outline += "\":{\"values\": [";
-
-  if(_length > 0) {
-    char b[64];
-    modp_dtoa2(_values[0], b, 9);
-    ctx.outline += b;
-    for(size_t i = 1; i < _length; i++) {
-      modp_dtoa2(_values[i], b, 9);
-      ctx.outline += ",";
-      ctx.outline += b;
-    }
-  }
-
-  ctx.outline += "],\"buildId\":\"";
-  ctx.outline += _buildId.data();
-  ctx.outline += "\",\"revision\":\"";
-  ctx.outline += _revision.data();
-  ctx.outline += "\"}";
-}
-
-
-
-
-

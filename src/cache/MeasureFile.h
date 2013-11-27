@@ -26,11 +26,6 @@ public:
   void mergeJSON(rapidjson::Value& blob);
 
   /** Output to file */
-  void output(FILE* f, PathNode<MeasureFile>* owner);
-
-  /** Output to file */
-  void output(FILE* f, const std::string& filePath);
-  void output(std::string& outline, const std::string& filePath);
   void output(FILE* f);
 };
 
