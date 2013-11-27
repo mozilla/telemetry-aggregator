@@ -40,7 +40,6 @@ int main(int argc, char *argv[]) {
   // Aggregated result set
   ResultSet set;
 
-/*
   // Read input file names from stdin
   cin.sync_with_stdio(false);
   string filename;
@@ -49,7 +48,6 @@ int main(int argc, char *argv[]) {
   }
   set.output(output);
 
-*/
 
   // Close output file
   fclose(output);

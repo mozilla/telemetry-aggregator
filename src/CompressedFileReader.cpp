@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <string.h>
 
-#define INBUF_SIZE      (4 * 4096)
+#define INBUF_SIZE      (1)
 
 CompressedFileReader::CompressedFileReader(FILE* input)
  : _input(input), _stream(nullptr), _inbuf(nullptr), _outbuf(nullptr),
@@ -79,8 +79,6 @@ char* CompressedFileReader::nextLine() {
   _nextLine = _outbuf;
   assert(_stream->next_out >= _outbuf);
 
-  fprintf(stderr, "Getting line:\n");
-
   // Optional optimization:
   // Search for line breaks in interval from _outbuf, to _stream->next_out,
   // if found, update _nextLine, flip '\n' to '\0' and return... This should
@@ -140,31 +138,44 @@ char* CompressedFileReader::nextLine() {
         _nextLine++;
       }
 
-      // Realloc _outbuf, note that we should have filled _outbuf first
-      assert(_stream->next_out == _nextLine);
-      fprintf(stderr, "Size: %i != %i \n", _size, _nextLine - _outbuf );
-      fprintf(stderr, "avail_out: %i, '%i'\n", _stream->avail_out, *(_stream->next_out -1));
-      assert((_nextLine - _outbuf) == _size);
+      // If there no more available space, allocate some
+      if (_stream->avail_out == 0) {
+        // Realloc _outbuf, note that we should have filled _outbuf first
+        assert(_stream->next_out == _nextLine);
+        assert((_nextLine - _outbuf) == (int)_size);
 
-      // Double size, to get a nice amortized complexity, no we don't bother
-      // scaling down the allocation
-      _outbuf = (uint8_t*)realloc(_outbuf, _size * 2);
+        // Double size, to get a nice amortized complexity, no we don't bother
+        // scaling down the allocation
+        _outbuf = (uint8_t*)realloc(_outbuf, _size * 2);
 
-      // Update _nextLine, _stream->next_out and _stream->avail_out
-      _nextLine           = _outbuf + _size;
-      _stream->next_out   = _outbuf + _size;
-      _stream->avail_out  = _size;
+        // Update _nextLine, _stream->next_out and _stream->avail_out
+        _nextLine           = _outbuf + _size;
+        _stream->next_out   = _outbuf + _size;
+        _stream->avail_out  = _size;
 
-      // Store the updated size
-      _size *= 2;
+        // Store the updated size
+        _size *= 2;
+      }
+
+      // If we're at the end of the input
+      if (ret == LZMA_STREAM_END) {
+        // End and release the stream
+        lzma_end(_stream);
+        delete _stream;
+        _stream = nullptr;
+
+        // If there is any input left, return it
+        if (_nextLine != _outbuf) {
+          *_nextLine = '\0';
+          return (char*)_outbuf;
+        }
+
+        // If no input left, return done
+        return nullptr;
+      }
     }
 
-    // End stream and set _stream null if we're done
-    if (ret == LZMA_STREAM_END) {
-      lzma_end(_stream);
-      delete _stream;
-      _stream = nullptr;
-    } else if (ret != LZMA_OK) {
+    if (ret != LZMA_OK) {
       assert(false);
     }
   }

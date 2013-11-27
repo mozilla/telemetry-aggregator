@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
 
     // End of input
     line = reader.nextLine();
-    assert(!line);
+    assert(line == nullptr);
 
     fclose(input);
   }

@@ -185,7 +185,7 @@ class ChannelVersionManager:
             try:
                 definition = self.fetch_histgram_definition(measure, revision)
             except:
-                return;
+                return
             self.histograms[measure] = definition
             self.revisions[measure] = {
                 'revision':     revision,

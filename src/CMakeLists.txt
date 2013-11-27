@@ -16,6 +16,7 @@ set(AGGREGATOR_SRC
     cache/Aggregate.cpp
     cache/MeasureFile.cpp
     cache/ResultSet.cpp
+    CompressedFileReader.cpp
     ../stringencoders/modp_numtoa.c
     Aggregator.cpp
 )
