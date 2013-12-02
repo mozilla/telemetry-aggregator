@@ -52,12 +52,15 @@ void ResultSet::mergeStream(istream& stream) {
       continue;
     }
 
-    // Find blob and merge with it
-    auto n = _channelVersionRoot.find(channelVersion.data(), _channelVersionStringCtx);
-    if(!n->target()) {
-      n->setTarget(new ChannelVersion(_measureStringCtx, _filterStringCtx));
+    // Find channel version in hash table
+    auto it = _channelVersionMap.find(channelVersion);
+    // If not present create ChannelVersion
+    if (it == _channelVersionMap.end()) {
+      auto cv = new ChannelVersion(_measureStringCtx, _filterStringCtx);
+      it = _channelVersionMap.insert({channelVersion, cv}).first;
     }
-    n->target()->mergeMeasureJSON(measure.data(), d);
+    // Merge our data in
+    it->second->mergeMeasureJSON(measure.data(), d);
   }
 }
 
@@ -94,15 +97,13 @@ void ResultSet::aggregate(const char* filename) {
 }
 
 void ResultSet::output(FILE* f) {
-  string cv;
-  cv.reserve(1024);
+  for(auto pair : _channelVersionMap) {
+    pair.second->output(f, pair.first);
+  }
+}
 
-  auto write = [&f, &cv](ChannelVersion* channelVersion,
-                         PathNode<ChannelVersion>* parent) -> void {
-    cv.clear();
-    parent->output(cv);
-    channelVersion->output(f, cv);
-  };
-
-  _channelVersionRoot.visitTargetTree(write);
+ResultSet::~ResultSet() {
+  for(auto pair : _channelVersionMap) {
+    delete pair.second;
+  }
 }

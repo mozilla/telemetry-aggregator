@@ -6,15 +6,19 @@
 
 #include "rapidjson/document.h"
 
+#include <unordered_map>
 #include <stdio.h>
 
 class MeasureFile;
 
 /** Object that manages a collection of files a given channel/version */
 class ChannelVersion {
-  PathNode<MeasureFile> _measureRoot;
-  InternedStringContext& _measureStringCtx;
-  InternedStringContext& _filterStringCtx;
+  typedef InternedStringMap<MeasureFile*> MeasureFileMap;
+  MeasureFileMap          _measureFileMap;
+
+  PathNode<MeasureFile>   _measureRoot;
+  InternedStringContext&  _measureStringCtx;
+  InternedStringContext&  _filterStringCtx;
 public:
   ChannelVersion(InternedStringContext& measureStringCtx,
                  InternedStringContext& filterStringCtx)
@@ -25,6 +29,10 @@ public:
 
   /** Output to file */
   void output(FILE* f, const std::string& channelVersion);
+
+  void clear();
+
+  ~ChannelVersion();
 };
 
 

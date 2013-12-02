@@ -171,5 +171,73 @@ public:
   friend class InternedString;
 };
 
+/** InternedString map, allows lookups without conversation to InternedString */
+template<typename Value>
+class InternedStringMap {
+  /** Hash for C strings */
+  struct StrHash {
+    size_t operator()(const char* s) const {
+      size_t hash = 0;
+      while(*s != '\0') {
+        hash = (hash << 6) ^ *(s++);
+      }
+      return hash;
+    }
+  };
+
+  /** Comparison operator for C strings */
+  struct StrCmp {
+    bool operator()(const char* s1, const char* s2) const {
+      return strcmp(s1, s2) == 0;
+    }
+  };
+
+  /** Items stored in map */
+  struct Item {
+    InternedString  key;
+    Value           value;
+  };
+
+  /** Internal unordered_map */
+  typedef std::unordered_map<const char*, Item, StrHash, StrCmp> Map;
+
+  /** Underlying unordered_map */
+  Map _map;
+public:
+
+
+  /** Get value from key, returns fallback if key isn't present */
+  Value get(const char* key, Value fallback) {
+    auto it = _map.find(key);
+    if (it != _map.end()) {
+      return it->second.value;
+    }
+    return fallback;
+  }
+
+  /** Get value from key, returns fallback if key isn't present */
+  Value get(const InternedString& key, Value fallback) {
+    return get(key.data(), fallback);
+  }
+
+  /** Set value for given key */
+  void set(const InternedString& key, Value value) {
+    _map.insert({key.data(), {key, value}});
+  }
+
+  /** For each pair in map, call callback(key, value) */
+  template<typename Functor>
+  void each(Functor& callback) {
+    for(auto it : _map) {
+      callback(it.second.key, it.second.value);
+    }
+  }
+
+  /** Remove all items */
+  void clear() {
+    _map.clear();
+  }
+};
+
 
 #endif // INTERNED_STRING_H

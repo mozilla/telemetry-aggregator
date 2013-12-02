@@ -6,13 +6,15 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <string>
+#include <unordered_map>
 
 class ChannelVersion;
 
 /** A collection of results for various measures files */
 class ResultSet {
-  PathNode<ChannelVersion>  _channelVersionRoot;
-  InternedStringContext     _channelVersionStringCtx;
+  typedef std::unordered_map<std::string, ChannelVersion*> ChannelVersionMap;
+  ChannelVersionMap         _channelVersionMap;
   InternedStringContext     _measureStringCtx;
   InternedStringContext     _filterStringCtx;
 public:
@@ -24,6 +26,9 @@ public:
 
   /** Decompress and aggregated file */
   void aggregate(const char* filename);
+
+  /** Free elements from unordered_map */
+  ~ResultSet();
 };
 
 #endif // RESULTSET_H

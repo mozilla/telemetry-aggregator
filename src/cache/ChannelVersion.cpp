@@ -9,23 +9,36 @@ using namespace std;
 using namespace rapidjson;
 
 void ChannelVersion::mergeMeasureJSON(const char* measure, Value& blob) {
-  PathNode<MeasureFile>* n = _measureRoot.find(measure, _measureStringCtx);
-  if(!n->target()) {
-    n->setTarget(new MeasureFile(_filterStringCtx));
+  MeasureFile* mf = _measureFileMap.get(measure, nullptr);
+  if (!mf) {
+    mf = new MeasureFile(_filterStringCtx);
+    InternedString m = _measureStringCtx.createString(measure);
+    _measureFileMap.set(m, mf);
   }
-  n->target()->mergeJSON(blob);
+  mf->mergeJSON(blob);
 }
 
 void ChannelVersion::output(FILE* f, const string& channelVersion) {
-  auto write = [&channelVersion, &f](MeasureFile* measure,
-                                     PathNode<MeasureFile>* parent) -> void {
+  auto write = [&channelVersion, &f](InternedString& measure,
+                                     MeasureFile* measureFile) -> void {
     fputs(channelVersion.data(), f);
     fputc('/', f);
-    parent->output(f);
+    fputs(measure.data(), f);
     fputc('\t', f);
-    measure->output(f);
+    measureFile->output(f);
     fputc('\n', f);
   };
+  _measureFileMap.each(write);
+}
 
-  _measureRoot.visitTargetTree(write);
+void ChannelVersion::clear() {
+  auto free = [](InternedString& measure, MeasureFile* measureFile) -> void {
+    delete measureFile;
+  };
+  _measureFileMap.each(free);
+  _measureFileMap.clear();
+}
+
+ChannelVersion::~ChannelVersion() {
+  clear();
 }

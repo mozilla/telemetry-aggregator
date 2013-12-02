@@ -7,8 +7,10 @@
 #include "rapidjson/document.h"
 
 #include <stdio.h>
+#include <vector>
 
 class Aggregate;
+class ChannelVersion;
 
 /**
  * In-memory representation of the aggregated data stored in a single JSON file.
@@ -16,17 +18,25 @@ class Aggregate;
  * given measure under different channel, product, version and by-date.
  */
 class MeasureFile {
-  PathNode<Aggregate>           _filterRoot;
+  /** Entry holding date and filtered aggregates */
+  struct DateEntry {
+    InternedString      date;
+    PathNode<Aggregate> filterRoot;
+  };
+  /** Filtered aggregates for each date */
+  std::vector<DateEntry*>       _dates;
   InternedStringContext&        _filterStringCtx;
 public:
   MeasureFile(InternedStringContext& filterStringCtx)
-   : _filterStringCtx(filterStringCtx) {}
+   : _filterStringCtx(filterStringCtx), _parent(parent) {}
 
   /** Merge with JSON from file */
   void mergeJSON(rapidjson::Value& blob);
 
   /** Output to file */
   void output(FILE* f);
+
+  ~MeasureFile();
 };
 
 #endif // MEASUREFILE_H
