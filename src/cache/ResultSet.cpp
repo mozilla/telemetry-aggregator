@@ -6,8 +6,10 @@
 
 #include "rapidjson/document.h"
 
+#include <unistd.h>
 #include <stdio.h>
 #include <string>
+#include <fstream>
 
 using namespace std;
 using namespace rapidjson;
@@ -101,6 +103,39 @@ void ResultSet::output(FILE* f) {
     pair.second->output(f, pair.first);
   }
 }
+
+void ResultSet::updateFileInFolder(string folder) {
+  // Ensure folder ends with a slash
+  if (folder[folder.length() - 1] != '/') {
+    folder += '/';
+  }
+
+  // For each channel/version
+  string filename;
+  filename.reserve(256 + folder.size());
+  for(auto pair : _channelVersionMap) {
+    string channelDashVersion = pair.first;
+    for(size_t i = 0; i < channelDashVersion.length(); i++) {
+      if(channelDashVersion[i] == '/')
+        channelDashVersion[i] = '-';
+    }
+    filename = folder + channelDashVersion;
+    // Check if filename exists
+    if (access(filename.data(), F_OK) != 0) {
+      // If it exists we'll want to merge it into the current data-set
+      ifstream file(filename);
+      mergeStream(file);
+      file.close();
+    }
+    FILE* f = fopen(filename.data(), "w");
+    if (!f) {
+      fprintf(stderr, "Failed to open '%s'\n", filename.data());
+    }
+    pair.second->output(f, pair.first);
+    fclose(f);
+  }
+}
+
 
 ResultSet::~ResultSet() {
   for(auto pair : _channelVersionMap) {

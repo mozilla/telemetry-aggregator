@@ -28,7 +28,7 @@ class MeasureFile {
   InternedStringContext&        _filterStringCtx;
 public:
   MeasureFile(InternedStringContext& filterStringCtx)
-   : _filterStringCtx(filterStringCtx), _parent(parent) {}
+   : _filterStringCtx(filterStringCtx) {}
 
   /** Merge with JSON from file */
   void mergeJSON(rapidjson::Value& blob);

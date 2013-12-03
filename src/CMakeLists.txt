@@ -13,7 +13,6 @@ set(MERGERESULTS_SRC
     ${COMMON_SRC}
     MergeResult.cpp
 )
-include_directories(${LIBLZMA_INCLUDE_DIRS})
 
 add_executable(../mergeresults ${MERGERESULTS_SRC})
 add_dependencies(../mergeresults rapidjson)

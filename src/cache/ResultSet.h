@@ -24,6 +24,12 @@ public:
   /** Output result-set to file */
   void output(FILE* f);
 
+  /**
+   * Outout result-set to folder as one file per Channel/version updating
+   * existing files.
+   */
+  void updateFileInFolder(std::string folder);
+
   /** Decompress and aggregated file */
   void aggregate(const char* filename);
 

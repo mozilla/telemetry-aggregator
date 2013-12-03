@@ -14,6 +14,8 @@ include(externals)
 
 find_package(LibLZMA REQUIRED)
 
+include_directories(${LIBLZMA_INCLUDE_DIRS})
+
 enable_testing()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -V)
 

@@ -27,11 +27,15 @@ int main(int argc, char *argv[]) {
   vector<char*> inputs;
   FILE* output = stdout;
   bool sorted = false;
+  char* folder = nullptr;
 
   // Parse arguments
   int c;
-  while ((c = getopt(argc, argv, "hsi:o:")) != -1) {
+  while ((c = getopt(argc, argv, "hsi:o:f:")) != -1) {
     switch (c) {
+      case 'f':
+        folder = optarg;
+        break;
       case 's':
         sorted = true;
         break;
@@ -61,6 +65,17 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  // We can't both write to file and folders (we could be this is stupid!)
+  if (folder && output != stdout) {
+    fprintf(stderr, "Output (-o) and folder (-f) options cannot be combined\n");
+  }
+
+  // We haven't implemented support for sorted input and output to folders
+  if (sorted && folder) {
+    fprintf(stderr, "Sort (-s) and folder (-f) options cannot be combined\n");
+    exit(1);
+  }
+
   // Merge input in memory if input isn't sorted
   if (!sorted) {
     // Input one by one
@@ -75,7 +90,14 @@ int main(int argc, char *argv[]) {
         set.mergeStream(stream);
       }
     }
-    set.output(output);
+
+    // Write output
+    if (folder) {
+      set.updateFileInFolder(folder);
+    } else {
+      // Write out to file
+      set.output(output);
+    }
 
   } else {
     // If a single sorted file is given we read from it and output whenever the
