@@ -3,10 +3,12 @@
 #include "MeasureFile.h"
 #include "Aggregate.h"
 #include "../CompressedFileReader.h"
+#include "../../utils/ParseDate.h"
 
 #include "rapidjson/document.h"
 
 #include <unistd.h>
+#include <time.h>
 #include <stdio.h>
 #include <string>
 #include <fstream>
@@ -66,38 +68,6 @@ void ResultSet::mergeStream(istream& stream) {
   }
 }
 
-void ResultSet::aggregate(const char* filename) {
-  FILE* input = fopen(filename, "r");
-  {
-    // Read file line by line
-    CompressedFileReader reader(input);
-    char* line = nullptr;
-    int nb_line = 0;
-    while ((line = reader.nextLine()) != nullptr) {
-      nb_line++;
-      // Find tab
-      char* tab = strchr(line, '\t');
-      if (!tab) {
-        fprintf(stderr, "No tab on line %i\n", nb_line);
-        continue;
-      }
-
-      // Set tab = \0 creating two C-strings
-      *tab = '\0';
-      char* uuid = line;
-      char* json = tab + 1;
-
-      // Parse the JSON line
-      Document d;
-      d.Parse<0>(json);
-
-      // Find file paths
-      // Lookup path and aggregate
-    }
-  }
-  fclose(input);
-}
-
 void ResultSet::output(FILE* f) {
   for(auto pair : _channelVersionMap) {
     pair.second->output(f, pair.first);
@@ -142,3 +112,75 @@ ResultSet::~ResultSet() {
     delete pair.second;
   }
 }
+
+void ResultSet::aggregate(const std::string& prefix,
+                          const std::string& filename) {
+  // Parse prefix
+  char* prefix_data = strdup(prefix.data());
+  char* reason          = strtok(prefix_data, "/");
+  char* appName         = strtok(NULL, "/");
+  char* channel         = strtok(NULL, "/");
+  char* version         = strtok(NULL, "/");
+  char* buildId         = strtok(NULL, "/");
+  char* submissionDate  = strtok(NULL, "/");
+  if (!reason || !appName || !channel || !version || !buildId ||
+      !submissionDate) {
+    fprintf(stderr, "Prefix '%s' missing parts \n", prefix.data());
+    return;
+  }
+
+  // Get build date, ignore the rest
+  if (strlen(buildId) != 12) {
+    fprintf(stderr, "BuildId '%s' is not valid, too short\n", buildId);
+    return;
+  }
+  string buildDate(buildId, 8);
+
+  // Decide if we should skip submission date
+  bool skipBySubmissionDate = false;
+  {
+    // Parse submission date and buildDate
+    time_t submissionTime = parseDate(submissionDate);
+    time_t buildTime      = parseDate(buildDate.data());
+
+    // Skip aggregation by submission date of it's been more than 60 days since
+    // build date
+    if (difftime(submissionTime, buildTime) > 60 * 60 * 24 * 60) {
+      skipBySubmissionDate = true;
+    }
+  }
+
+  FILE* input = fopen(filename.data(), "r");
+  {
+    // Read file line by line
+    CompressedFileReader reader(input);
+    char* line = nullptr;
+    int nb_line = 0;
+    while ((line = reader.nextLine()) != nullptr) {
+      nb_line++;
+      // Find tab
+      char* tab = strchr(line, '\t');
+      if (!tab) {
+        fprintf(stderr, "No tab on line %i\n", nb_line);
+        continue;
+      }
+
+      // Set tab = \0 creating two C-strings
+      *tab = '\0';
+      char* uuid = line;
+      char* json = tab + 1;
+
+      // Parse the JSON line
+      Document d;
+      d.Parse<0>(json);
+
+      // Find file paths
+
+      // Lookup path and aggregate
+    }
+  }
+  fclose(input);
+
+  free(prefix_data);
+}
+
