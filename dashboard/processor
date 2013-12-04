@@ -1,0 +1,2 @@
+#!/bin/bash
+python analysis.py -o $1
