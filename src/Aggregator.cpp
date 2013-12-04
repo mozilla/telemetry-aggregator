@@ -43,9 +43,11 @@ int main(int argc, char *argv[]) {
 
   // Read input file names from stdin
   cin.sync_with_stdio(false);
-  string filename;
-  while(getline(cin, filename)) {
-    set.aggregate(filename.data());
+  string line;
+  line.reserve(4096);
+  while(getline(cin, line)) {
+    //line.data()
+    //set.aggregate();
   }
   set.output(output);
 
