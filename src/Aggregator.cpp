@@ -45,9 +45,20 @@ int main(int argc, char *argv[]) {
   cin.sync_with_stdio(false);
   string line;
   line.reserve(4096);
-  while(getline(cin, line)) {
-    //line.data()
-    //set.aggregate();
+  while (getline(cin, line)) {
+    // Find first tab
+    size_t tab = line.find('\t');
+    if (tab == string::npos) {
+      fprintf(stderr, "Got input-line without tab: '%s'\n", line.data());
+      continue;
+    }
+
+    // Find prefix and filename
+    string prefix   = line.substr(0, tab);
+    string filename = line.substr(tab + 1);
+
+    // Aggregate
+    set.aggregate(prefix, filename);
   }
   set.output(output);
 

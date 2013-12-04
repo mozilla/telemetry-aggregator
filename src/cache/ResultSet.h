@@ -31,7 +31,7 @@ public:
   void updateFileInFolder(std::string folder);
 
   /** Decompress and aggregated file */
-  void aggregate(const char* filename);
+  void aggregate(const std::string& prefix, const std::string& filename);
 
   /** Free elements from unordered_map */
   ~ResultSet();
