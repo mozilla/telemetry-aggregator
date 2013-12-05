@@ -4,6 +4,7 @@
 #include "Aggregate.h"
 #include "../CompressedFileReader.h"
 #include "../../utils/ParseDate.h"
+#include "../../utils/mkdirp.h"
 
 #include "rapidjson/document.h"
 
@@ -84,22 +85,32 @@ void ResultSet::updateFileInFolder(string folder) {
   string filename;
   filename.reserve(256 + folder.size());
   for(auto pair : _channelVersionMap) {
-    string channelDashVersion = pair.first;
-    for(size_t i = 0; i < channelDashVersion.length(); i++) {
-      if(channelDashVersion[i] == '/')
-        channelDashVersion[i] = '-';
+    // Find first slash (and there by channel)
+    size_t slash = pair.first.find("/");
+    if (slash == string::npos) {
+      fprintf(stderr, "Cannot output channel/version without slash: '%s'\n",
+              pair.first.data());
+      continue;
     }
-    filename = folder + channelDashVersion;
+    string channel = pair.first.substr(0, slash);
+
     // Check if filename exists
-    if (access(filename.data(), F_OK) != 0) {
+    filename = folder + pair.first;
+    if (access(filename.data(), F_OK) == 0) {
       // If it exists we'll want to merge it into the current data-set
       ifstream file(filename);
       mergeStream(file);
       file.close();
     }
+
+    // Create channel folder if it doesn't already exists
+    mkdirp((folder + channel).data());
+
+    // Output updated file
     FILE* f = fopen(filename.data(), "w");
     if (!f) {
       fprintf(stderr, "Failed to open '%s'\n", filename.data());
+      continue;
     }
     pair.second->output(f, pair.first);
     fclose(f);
