@@ -45,7 +45,7 @@ void ResultSet::mergeStream(istream& stream) {
 
     // Find filePath
     string channelVersion = line.substr(0, slash);
-    string measure        = line.substr(slash + 1, tab - slash);
+    string measure        = line.substr(slash + 1, tab - slash - 1);
 
     // Parse JSON document
     Document d;

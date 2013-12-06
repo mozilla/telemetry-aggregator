@@ -6,7 +6,9 @@ from multiprocessing import Process, Queue, cpu_count
 from boto.s3 import connect_to_region as s3_connect
 from boto.s3.key import Key
 from traceback import print_exc
-import shutil
+import shutil, time
+
+NB_RETRIES = 6
 
 class Downloader(Process):
     def __init__(self, queue, output_queue, input_bucket, decompress, compress,
@@ -35,7 +37,7 @@ class Downloader(Process):
                 break
             source_prefix, target_path = msg
             retries = 0
-            while retries < 3:
+            while retries < NB_RETRIES:
                 try:
                     retries += 1
                     k = Key(bucket)
@@ -54,7 +56,8 @@ class Downloader(Process):
                 except:
                     print >> sys.stderr, "Failed to download %s to %s" % msg
                     print_exc(file = sys.stderr)
-            if retries >= 3:
+                    time.sleep((retries - 1) ** 2)
+            if retries >= NB_RETRIES:
                 sys.exit(1)
             if self.output_queue != None:
                 self.output_queue.put(target_path)

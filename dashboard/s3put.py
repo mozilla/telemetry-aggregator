@@ -6,7 +6,9 @@ from multiprocessing import Process, Queue, cpu_count
 from boto.s3 import connect_to_region as s3_connect
 from boto.s3.key import Key
 from traceback import print_exc
-import shutil
+import shutil, time
+
+NB_RETRIES = 6
 
 class Uploader(Process):
     def __init__(self, queue, target_bucket, decompress, compress, region, aws_cred):
@@ -33,7 +35,7 @@ class Uploader(Process):
                 break
             source_file, target_prefix = msg
             retries = 0
-            while retries < 3:
+            while retries < NB_RETRIES:
                 try:
                     retries += 1
                     with read(source_file) as f:
@@ -56,7 +58,8 @@ class Uploader(Process):
                 except:
                     print >> sys.stderr, "Failed to upload %s to %s" % msg
                     print_exc(file = sys.stderr)
-            if retries >= 3:
+                    time.sleep((retries - 1) ** 2)
+            if retries >= NB_RETRIES:
                 sys.exit(1)
         s3.close()
 

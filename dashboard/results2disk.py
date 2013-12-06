@@ -39,6 +39,9 @@ def save_json_to_file(path, value, compress, pretty_print):
         with open(path, 'w') as f:
             json.dump(value, f, indent = print_indent)
 
+# Size of internal histograms.json cache
+HGRAMS_JSON_CACHE_SIZE = 15
+
 class ChannelVersionManager:
     """ Manages data stored for a specific channel / version """
     def __init__(self, root_folder, channel, version, compress, pretty_print, cached = False):
@@ -62,6 +65,10 @@ class ChannelVersionManager:
 
         # Load histogram revision meta-data
         self.revisions = self.json_from_file("revisions.json", {})
+
+        # Histograms.json cache
+        self.histograms_json_cache = [(None, None)] * HGRAMS_JSON_CACHE_SIZE
+        self.histograms_json_cache_next = 0
 
     def json_from_file(self, filename, fallback_value):
         """ Load json from file, return fallback_value if no file exists """
@@ -132,18 +139,28 @@ class ChannelVersionManager:
         # Output histogram revisions meta-data
         self.json_to_file('revisions.json', self.revisions)
 
-    def fetch_histgram_definition(self, measure, revision):
+    def fetch_histogram_definition(self, measure, revision):
         """ Fetch histogram definition from histogram.json server """
         if revision == 'simple-measures-hack':
             assert measure.startswith("SIMPLE_MEASURES_"), "simple measures should be prefixed!"
             return get_simple_measures_definition(measure)
-        url = "http://localhost:9898/histograms?revision=%s" % revision
-        try:
-            request = urlopen(url)
-        except HTTPError:
-            print >> sys.stderr, "Failed to fetch revision: %s" % revision
-            raise
-        histograms = json.load(request)
+        histograms = None
+        for rev, defs in self.histograms_json_cache:
+            if rev == revision and rev != None:
+                histograms = defs
+                break
+        if histograms is None:
+            url = "http://localhost:9898/histograms?revision=%s" % revision
+            try:
+                request = urlopen(url)
+            except HTTPError:
+                print >> sys.stderr, "Failed to fetch revision: %s" % revision
+                raise
+            histograms = json.load(request)
+            # Cache results
+            i = self.histograms_json_cache_next
+            self.histograms_json_cache[i] = (revision, histograms)
+            self.histograms_json_cache_next = (i + 1) % HGRAMS_JSON_CACHE_SIZE
         if histograms.has_key(measure):
             return histograms[measure]
         if measure.startswith("SIMPLE_MEASURES_"):
@@ -171,6 +188,7 @@ class ChannelVersionManager:
         purge_data = False
         for dump in blob.itervalues():
             if buildId < dump.get('buildId', ''):
+                #print "update-def: '%s' < '%s' for %s" % (buildId, dump.get('buildId', ''), measure)
                 # Okay histogram definition needs to be updated
                 update_definition = True
                 # if we have a data-array length mismatch, then we purge existing data
@@ -183,8 +201,9 @@ class ChannelVersionManager:
         # A newer buildId was found
         if update_definition:
             try:
-                definition = self.fetch_histgram_definition(measure, revision)
+                definition = self.fetch_histogram_definition(measure, revision)
             except:
+                print >> sys.stderr, "Failed to fetch definition: %s" % revision
                 return
             self.histograms[measure] = definition
             self.revisions[measure] = {

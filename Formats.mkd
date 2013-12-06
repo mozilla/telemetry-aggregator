@@ -50,10 +50,26 @@ v2/
         filter-tree.json
         histograms.json
         revisions.json
+v3/
+  FILES_PROCESSED
+  FILES_MISSING
+  versions.json
+  YYYYMMDDhhmmss-<channel>-<version>/
+    MEASURE-by-build-date.json
+    MEASURE-by-submission-date.json
+    filter-tree.json
+    histograms.json
+    revisions.json
 
 
 Web Facing JSON Format:
 -----------------
+
+versions.json
+  {
+    "<version>/<channel>": "YYYYMMDDhhmmss-<channel>-<version>"
+    ...
+  }
 
 
 /<channel>/<version>
