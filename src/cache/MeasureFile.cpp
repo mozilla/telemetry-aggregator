@@ -57,6 +57,31 @@ void MeasureFile::mergeJSON(Value& blob) {
   }
 }
 
+Aggregate* MeasureFile::aggregate(const char* date, const char* filterPath) {
+      // find date entry, if present
+    DateEntry* entry = nullptr;
+    for (auto e : _dates) {
+      if (e->date == date) {
+        entry = e;
+        break;
+      }
+    }
+
+    // Insert new date entry
+    if (!entry) {
+      entry = new DateEntry();
+      entry->date = _filterStringCtx.createString(date);
+      _dates.push_back(entry);
+    }
+
+    // Find PathNode
+    PathNode<Aggregate>* n = entry->filterRoot.find(filterPath, _filterStringCtx);
+    if (!n->target()) {
+      n->setTarget(new Aggregate());
+    }
+
+    return n->target();
+}
 
 /** Output to file */
 void MeasureFile::output(FILE* f) {

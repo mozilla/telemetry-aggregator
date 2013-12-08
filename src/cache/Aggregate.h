@@ -40,6 +40,11 @@ public:
   /** Output to file */
   void output(FILE* f);
 
+  /** Intern a revision string */
+  static InternedString internRevisionString(const char* revision);
+  /** Intern a build id string */
+  static InternedString internBuildIdString(const char* buildId);
+
   ~Aggregate() {
     if (_values) {
       delete[] _values;

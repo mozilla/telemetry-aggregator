@@ -18,6 +18,16 @@ void ChannelVersion::mergeMeasureJSON(const char* measure, Value& blob) {
   mf->mergeJSON(blob);
 }
 
+MeasureFile* ChannelVersion::measure(const char* measure) {
+  MeasureFile* mf = _measureFileMap.get(measure, nullptr);
+  if (!mf) {
+    mf = new MeasureFile(_filterStringCtx);
+    InternedString m = _measureStringCtx.createString(measure);
+    _measureFileMap.set(m, mf);
+  }
+  return mf;
+}
+
 void ChannelVersion::output(FILE* f, const string& channelVersion) {
   auto write = [&channelVersion, &f](InternedString& measure,
                                      MeasureFile* measureFile) -> void {
