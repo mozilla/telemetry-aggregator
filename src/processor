@@ -1,0 +1,2 @@
+#!/bin/bash
+./aggregator -o $1/result.txt

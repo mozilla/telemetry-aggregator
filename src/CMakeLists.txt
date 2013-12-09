@@ -26,3 +26,15 @@ set(AGGREGATOR_SRC
 add_executable(../aggregator ${AGGREGATOR_SRC})
 add_dependencies(../aggregator rapidjson)
 target_link_libraries(../aggregator ${LIBLZMA_LIBRARIES})
+
+file(COPY processor DESTINATION .)
+
+set(AGGREGATOR_BUNDLE_SRC
+    ../aggregator
+    processor
+)
+
+add_custom_target(
+      aggregator_bundle ALL
+      COMMAND tar "-czf" "../aggregator_bundle.tar.gz" ${AGGREGATOR_BUNDLE_SRC}
+)
