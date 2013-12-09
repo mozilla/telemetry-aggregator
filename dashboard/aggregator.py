@@ -92,6 +92,8 @@ class Aggregator:
         processed_msgblocks = []
         last_flush = datetime.utcnow()
         while True:
+            print "### Handling messages"
+
             # get new_messages from sqs
             messages = []
             for i in xrange(0, MESSAGE_BLOCKS_TO_MERGE):
