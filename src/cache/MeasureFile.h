@@ -33,6 +33,9 @@ public:
   /** Merge with JSON from file */
   void mergeJSON(rapidjson::Value& blob);
 
+  /** Get aggregate from date and filter-path */
+  Aggregate* aggregate(const char* date, const char* filterPath);
+
   /** Output to file */
   void output(FILE* f);
 

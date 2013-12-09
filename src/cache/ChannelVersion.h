@@ -27,6 +27,9 @@ public:
   /** Merge in a JSON blob for a specific measure */
   void mergeMeasureJSON(const char* measure, rapidjson::Value& blob);
 
+  /** Get measureFile for a given measure */
+  MeasureFile* measure(const char* measure);
+
   /** Output to file */
   void output(FILE* f, const std::string& channelVersion);
 

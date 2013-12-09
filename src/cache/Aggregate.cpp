@@ -12,6 +12,15 @@ InternedStringContext  Aggregate::_buildIdStringCtx;
 InternedStringContext  Aggregate::_revisionStringCtx;
 
 
+InternedString Aggregate::internRevisionString(const char* revision) {
+  return _revisionStringCtx.createString(revision);
+}
+
+InternedString Aggregate::internBuildIdString(const char* buildId) {
+  return _buildIdStringCtx.createString(buildId);
+}
+
+
 void Aggregate::mergeJSON(const Value& dump) {
   const Value::Member* jvalues    = dump.FindMember("values");
   const Value::Member* jrevision  = dump.FindMember("revision");

@@ -5,6 +5,7 @@
 #include "../CompressedFileReader.h"
 #include "../../utils/ParseDate.h"
 #include "../../utils/mkdirp.h"
+#include "../../stringencoders/modp_numtoa.h"
 
 #include "rapidjson/document.h"
 
@@ -16,6 +17,9 @@
 
 using namespace std;
 using namespace rapidjson;
+
+// Revision string used when missing, this is just a random recent one...
+#define FALLBACK_REVISION "http://hg.mozilla.org/mozilla-central/rev/518f5bff0ae4"
 
 void ResultSet::mergeStream(istream& stream) {
   // Read input line by line
@@ -132,20 +136,22 @@ void ResultSet::aggregate(const std::string& prefix,
   char* appName         = strtok(NULL, "/");
   char* channel         = strtok(NULL, "/");
   char* version         = strtok(NULL, "/");
-  char* buildId         = strtok(NULL, "/");
+  char* strBuildId      = strtok(NULL, "/");
   char* submissionDate  = strtok(NULL, "/");
-  if (!reason || !appName || !channel || !version || !buildId ||
+  if (!reason || !appName || !channel || !version || !strBuildId ||
       !submissionDate) {
     fprintf(stderr, "Prefix '%s' missing parts \n", prefix.data());
     return;
   }
+  // Intern strBuildId
+  InternedString buildId = Aggregate::internBuildIdString(strBuildId);
 
   // Get build date, ignore the rest
-  if (strlen(buildId) != 12) {
-    fprintf(stderr, "BuildId '%s' is not valid, too short\n", buildId);
+  if (strlen(strBuildId) != 12) {
+    fprintf(stderr, "BuildId '%s' is not valid, too short\n", strBuildId);
     return;
   }
-  string buildDate(buildId, 8);
+  string buildDate(strBuildId, 8);
 
   // Decide if we should skip submission date
   bool skipBySubmissionDate = false;
@@ -160,6 +166,35 @@ void ResultSet::aggregate(const std::string& prefix,
       skipBySubmissionDate = true;
     }
   }
+
+  // Reduce version to major version (discard everything after the dot)
+  {
+    char* c = version;
+    while(*c != '.' && *c != '\0') c++;
+    *c = '\0';
+  }
+
+  // Find/create ChannelVersion object
+  ChannelVersion* cv = nullptr;
+  {
+    string channelVersion = string(channel) + "/" + string(version);
+    // Find channel version in hash table
+    auto it = _channelVersionMap.find(channelVersion);
+    // If not present create ChannelVersion
+    if (it == _channelVersionMap.end()) {
+      cv = new ChannelVersion(_measureStringCtx, _filterStringCtx);
+      it = _channelVersionMap.insert({channelVersion, cv}).first;
+    }
+    cv = it->second;
+  }
+  assert(cv);
+
+  // Create filterPath start
+  string reasonAppName = string(reason) + "/" + string(appName) + "/";
+
+  // Allocate a string to hold <measure>/<by-date-type>
+  string measureFilename;
+  measureFilename.reserve(2048);
 
   FILE* input = fopen(filename.data(), "r");
   {
@@ -185,9 +220,116 @@ void ResultSet::aggregate(const std::string& prefix,
       Document d;
       d.Parse<0>(json);
 
-      // Find file paths
+      // Check that we have an object
+      if (!d.IsObject()) {
+        fprintf(stderr, "JSON root is not an object on line %i\n", nb_line);
+        continue;
+      }
 
-      // Lookup path and aggregate
+      // Find the info field
+      Value::Member* infoField = d.FindMember("info");
+      if (!infoField || !infoField->value.IsObject()) {
+        fprintf(stderr, "'info' in payload isn't an object, line %i\n", nb_line);
+        continue;
+      }
+      Value& info = infoField->value;
+
+      // Find OS, osVersion, arch and revision
+      Value::Member* osField    = d.FindMember("OS");
+      Value::Member* osVerField = d.FindMember("version");
+      Value::Member* archField  = d.FindMember("arch");
+      Value::Member* revField   = d.FindMember("revision");
+      if (!osField || !osField->value.IsString()) {
+        fprintf(stderr, "'OS' in 'info' isn't a string\n");
+        continue;
+      }
+      if (!osVerField || !(osVerField->value.IsString() ||
+                           osVerField->value.IsNumber())) {
+        fprintf(stderr, "'version' in 'info' isn't a string or number\n");
+        continue;
+      }
+      if (!archField || !archField->value.IsString()) {
+        fprintf(stderr, "'arch' in 'info' isn't a string\n");
+        continue;
+      }
+      InternedString revision;
+      if (!revField) { 
+        if (!revField->value.IsString()) {
+          fprintf(stderr, "'revision' in 'info' isn't a string\n");
+          continue;
+        }
+        // Get InternedString for revision
+        revision = Aggregate::internRevisionString(revField->value.GetString());
+      } else {
+        // Get InternedString for revision
+        revision = Aggregate::internRevisionString(FALLBACK_REVISION);
+      }
+
+      // Create filterPath as <reason>/<appName>/<OS>/<osVersion>/<arch>
+      const char* OS = osField->value.GetString();
+      string filterPath = reasonAppName + OS;
+      filterPath += "/";
+      string osVersion;
+      if (osVerField->value.IsString()) {
+        osVersion = osVerField->value.GetString();
+      } else {
+        char b[64];
+        modp_dtoa2(osVerField->value.GetDouble(), b, 9);
+        osVersion = b;
+      }
+      // For Linux we only add 3 first characters
+      if (strcmp(OS, "Linux") == 0) {
+        filterPath += osVersion.substr(0, 3);
+      } else {
+        filterPath += osVersion;
+      }
+      filterPath += "/";
+
+      // Append arch to filterPath
+      filterPath += archField->value.GetString();
+
+      // Aggregate histograms
+
+      Value::Member* hgramField = d.FindMember("histograms");
+      if (hgramField && hgramField->value.IsObject()) {
+        Value& hgrams = hgramField->value;
+        for (auto hgram = hgrams.MemberBegin(); hgram != hgrams.MemberEnd();
+                                                                      ++hgram) {
+          // Get histogram name and values
+          const char* name  = hgram->name.GetString();
+          Value& values     = hgram->value;
+
+          // MeasureFilename
+          measureFilename = name;
+          measureFilename += "/by-build-date";
+
+          // Get measure file
+          MeasureFile* mf = cv->measure(measureFilename.data());
+          Aggregate*   aggregate = mf->aggregate(buildDate.data(), filterPath.data());
+
+          // TODO: Add to aggregate
+
+          // Skip aggregation by submission date, unless requested
+          if (skipBySubmissionDate) {
+            continue;
+          }
+
+          // MeasureFilename
+          measureFilename = name;
+          measureFilename += "/by-submission-date";
+
+          // Get measure file
+          mf = cv->measure(measureFilename.data());
+          aggregate = mf->aggregate(submissionDate, filterPath.data());
+
+          // TODO: Add to aggregate
+        }
+      } else {
+        fprintf(stderr, "'histograms' of payload isn't an object\n");
+      }
+
+
+      // TODO: Aggregate simple measures
     }
   }
   fclose(input);
