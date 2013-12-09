@@ -12,11 +12,14 @@
 #include <unistd.h>
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 #include <string>
 #include <fstream>
 
 using namespace std;
 using namespace rapidjson;
+
+#define UNUSED(x)     (void)(x)
 
 // Revision string used when missing, this is just a random recent one...
 #define FALLBACK_REVISION "http://hg.mozilla.org/mozilla-central/rev/518f5bff0ae4"
@@ -136,19 +139,21 @@ void ResultSet::aggregate(const std::string& prefix,
   char* appName         = strtok(NULL, "/");
   char* channel         = strtok(NULL, "/");
   char* version         = strtok(NULL, "/");
-  char* strBuildId      = strtok(NULL, "/");
-  char* submissionDate  = strtok(NULL, "/");
+  char* strBuildId      = strtok(NULL, ".");
+  char* submissionDate  = strtok(NULL, ".");
   if (!reason || !appName || !channel || !version || !strBuildId ||
       !submissionDate) {
     fprintf(stderr, "Prefix '%s' missing parts \n", prefix.data());
+    free(prefix_data);
     return;
   }
   // Intern strBuildId
   InternedString buildId = Aggregate::internBuildIdString(strBuildId);
 
   // Get build date, ignore the rest
-  if (strlen(strBuildId) != 12) {
+  if (strlen(strBuildId) < 8) {
     fprintf(stderr, "BuildId '%s' is not valid, too short\n", strBuildId);
+    free(prefix_data);
     return;
   }
   string buildDate(strBuildId, 8);
@@ -216,6 +221,8 @@ void ResultSet::aggregate(const std::string& prefix,
       char* uuid = line;
       char* json = tab + 1;
 
+      UNUSED(uuid);
+
       // Parse the JSON line
       Document d;
       d.Parse<0>(json);
@@ -235,10 +242,10 @@ void ResultSet::aggregate(const std::string& prefix,
       Value& info = infoField->value;
 
       // Find OS, osVersion, arch and revision
-      Value::Member* osField    = d.FindMember("OS");
-      Value::Member* osVerField = d.FindMember("version");
-      Value::Member* archField  = d.FindMember("arch");
-      Value::Member* revField   = d.FindMember("revision");
+      Value::Member* osField    = info.FindMember("OS");
+      Value::Member* osVerField = info.FindMember("version");
+      Value::Member* archField  = info.FindMember("arch");
+      Value::Member* revField   = info.FindMember("revision");
       if (!osField || !osField->value.IsString()) {
         fprintf(stderr, "'OS' in 'info' isn't a string\n");
         continue;
@@ -307,13 +314,13 @@ void ResultSet::aggregate(const std::string& prefix,
           MeasureFile* mf = cv->measure(measureFilename.data());
           Aggregate*   aggregate = mf->aggregate(buildDate.data(), filterPath.data());
 
-          // TODO: Add to aggregate
+          // Add to aggregate
+          aggregate->aggregate(revision, buildId, values);
 
           // Skip aggregation by submission date, unless requested
           if (skipBySubmissionDate) {
             continue;
           }
-
           // MeasureFilename
           measureFilename = name;
           measureFilename += "/by-submission-date";
@@ -322,14 +329,105 @@ void ResultSet::aggregate(const std::string& prefix,
           mf = cv->measure(measureFilename.data());
           aggregate = mf->aggregate(submissionDate, filterPath.data());
 
-          // TODO: Add to aggregate
+          // Add to aggregate
+          aggregate->aggregate(revision, buildId, values);
         }
       } else {
         fprintf(stderr, "'histograms' of payload isn't an object\n");
       }
 
+      // Aggregate simple measures
+      Value::Member* smField = d.FindMember("simpleMeasurements");
+      if (smField && smField->value.IsObject()) {
+        Value& sms = smField->value;
+        for (auto sm = sms.MemberBegin(); sm != sms.MemberEnd(); ++sm) {
+          // Get simple measure name and values
+          string name   = sm->name.GetString();
+          Value& value  = sm->value;
 
-      // TODO: Aggregate simple measures
+          // Convert name to uppercase
+          for(size_t i = 0; i < name.length(); i++) {
+            name[i] = toupper(name[i]);
+          }
+
+          // Aggregate numbers
+          if (value.IsNumber()) {
+            // Create measure filename
+            measureFilename = "SIMPLE_MEASURES_";
+            measureFilename += name;
+            measureFilename += "/by-build-date";
+
+            // Get measure file
+            MeasureFile* mf = cv->measure(measureFilename.data());
+            Aggregate*   aggregate = mf->aggregate(buildDate.data(),
+                                                   filterPath.data());
+
+            // Aggregate simple measure
+            aggregate->aggregate(value.GetDouble());
+
+            // Aggregate by submission date if desired
+            if (!skipBySubmissionDate) {
+              // Create measure filename
+              measureFilename = "SIMPLE_MEASURES_";
+              measureFilename += name;
+              measureFilename += "/by-submission-date";
+
+              mf = cv->measure(measureFilename.data());
+              aggregate = mf->aggregate(submissionDate, filterPath.data());
+
+              // Aggregate simple measure
+              aggregate->aggregate(value.GetDouble());
+            }
+          } else if (value.IsObject()) {
+            // If we have an object read key/values of it
+            for (auto ssm = value.MemberBegin(); ssm != value.MemberEnd();
+                                                                        ++ssm) {
+              string subname   = ssm->name.GetString();
+              Value& subvalue  = ssm->value;
+
+              // Convert subname to uppercase
+              for(size_t i = 0; i < subname.length(); i++) {
+                subname[i] = toupper(subname[i]);
+              }
+
+              // Aggregate subvalue, if number, ignore errors there are lots of
+              // weird simple measures
+              if (subvalue.IsNumber()) {
+                // Create measure filename
+                measureFilename = "SIMPLE_MEASURES_";
+                measureFilename += name;
+                measureFilename += "_";
+                measureFilename += subname;
+                measureFilename += "/by-build-date";
+
+                // Get measure file
+                MeasureFile* mf = cv->measure(measureFilename.data());
+                Aggregate*   aggregate = mf->aggregate(buildDate.data(),
+                                                       filterPath.data());
+
+                // Aggregate simple measure
+                aggregate->aggregate(subvalue.GetDouble());
+
+                // Aggregate by submission date if desired
+                if (!skipBySubmissionDate) {
+                  // Create measure filename
+                  measureFilename = "SIMPLE_MEASURES_";
+                  measureFilename += name;
+                  measureFilename += "_";
+                  measureFilename += subname;
+                  measureFilename += "/by-submission-date";
+
+                  mf = cv->measure(measureFilename.data());
+                  aggregate = mf->aggregate(submissionDate, filterPath.data());
+
+                  // Aggregate simple measure
+                  aggregate->aggregate(subvalue.GetDouble());
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
   fclose(input);

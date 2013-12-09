@@ -88,10 +88,12 @@ public:
 
   /** Compare strings */
   bool operator<(const char* s) const {
-    if(!_buffer) {
-      return *s != '\0';
-    }
-    return _buffer->payload < s;
+    return asString() < s;
+  }
+
+  /** Compare strings */
+  bool operator<(const InternedString& s) const {
+    return asString() < s.asString();
   }
 
   /** Get string as const char* */

@@ -4,8 +4,10 @@
 #include "cache/Aggregate.h"
 
 #include <unistd.h>
+#include <stdio.h>
 
 #include <iostream>
+#include <fstream>
 
 /** Print usage */
 void usage() {
@@ -16,14 +18,18 @@ using namespace std;
 
 /** Main file */
 int main(int argc, char *argv[]) {
-  FILE* output = stdout;
+  FILE* output      = stdout;
+  const char* input = nullptr;
 
   // Parse arguments
   int c;
-  while ((c = getopt(argc, argv, "ho:")) != -1) {
+  while ((c = getopt(argc, argv, "ho:i:")) != -1) {
     switch (c) {
       case 'o':
         output = fopen(optarg, "w");
+        break;
+      case 'i':
+        input = optarg;
         break;
       case 'h':
         usage();
@@ -41,11 +47,19 @@ int main(int argc, char *argv[]) {
   // Aggregated result set
   ResultSet set;
 
-  // Read input file names from stdin
-  cin.sync_with_stdio(false);
+  // Read filename from stdin, if
+  istream* pi = nullptr;
+  if (input) {
+    pi = new ifstream(input);
+  } else {
+    // Read filenames from stdin
+    cin.sync_with_stdio(false);
+    pi = &cin;
+  }
+
   string line;
   line.reserve(4096);
-  while (getline(cin, line)) {
+  while (getline(*pi, line)) {
     // Find first tab
     size_t tab = line.find('\t');
     if (tab == string::npos) {
@@ -59,9 +73,16 @@ int main(int argc, char *argv[]) {
 
     // Aggregate
     set.aggregate(prefix, filename);
+
+    // Delete file
+    remove(filename.data());
   }
   set.output(output);
 
+  // If not reading from stdin, delete pi
+  if (input) {
+    delete pi;
+  }
 
   // Close output file
   fclose(output);

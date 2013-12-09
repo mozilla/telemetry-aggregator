@@ -37,6 +37,13 @@ public:
   /** Merge aggregated values from JSON dump */
   void mergeJSON(const rapidjson::Value& dump);
 
+  /** Aggregate values from published JSON ping */
+  void aggregate(const InternedString& revision, const InternedString& buildId,
+                 const rapidjson::Value& values);
+
+  /** Aggregate a simple measure reading */
+  void aggregate(double simpleMeasure);
+
   /** Output to file */
   void output(FILE* f);
 
