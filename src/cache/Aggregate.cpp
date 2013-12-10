@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <limits>
 
 using namespace std;
 using namespace rapidjson;
@@ -195,7 +196,7 @@ void Aggregate::aggregate(double simpleMeasure) {
       }
 
       // Find log value:
-      double log_val = log(simpleMeasure);
+      double log_val = log(fabs(simpleMeasure) + 1);
 
       // Set stats
       _values[length - 6] = simpleMeasure;
@@ -239,12 +240,32 @@ void Aggregate::output(FILE* f) {
   fputs("{\"values\": [", f);
   if(_length > 0) {
     char b[64];
-    modp_dtoa2(_values[0], b, 9);
-    fputs(b, f);
-    for(size_t i = 1; i < _length; i++) {
-      modp_dtoa2(_values[i], b, 9);
-      fputc(',', f);
+    double val = _values[0];
+    // Nan Check
+    if(val != val) {
+      fputs("null", f);
+    } else {
+      modp_dtoa2(val, b, 9);
       fputs(b, f);
+    }
+    for(size_t i = 1; i < _length; i++) {
+      fputc(',', f);
+      val = _values[i];
+      // NaN check
+      if(val != val) {
+        fputs("null", f);
+      } else {
+        // Infinity check
+        if (isinf(val)) {
+          if (val > 0) {
+            val = numeric_limits<double>::max();
+          } else {
+            val = -numeric_limits<double>::max();
+          }
+        }
+        modp_dtoa2(val, b, 9);
+        fputs(b, f);
+      }
     }
   }
   fputs("],\"buildId\":\"", f);
