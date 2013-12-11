@@ -224,7 +224,7 @@ void Aggregate::aggregate(double simpleMeasure) {
     }
 
     // Find log value:
-    double log_val = log(simpleMeasure);
+    double log_val = log(fabs(simpleMeasure) + 1);
 
     // Update stats
     _values[length - 6] += simpleMeasure;
@@ -241,8 +241,7 @@ void Aggregate::output(FILE* f) {
   if(_length > 0) {
     char b[64];
     double val = _values[0];
-    // Nan Check
-    if(val != val) {
+    if(isnan(val)) {
       fputs("null", f);
     } else {
       modp_dtoa2(val, b, 9);
@@ -251,8 +250,7 @@ void Aggregate::output(FILE* f) {
     for(size_t i = 1; i < _length; i++) {
       fputc(',', f);
       val = _values[i];
-      // NaN check
-      if(val != val) {
+      if(isnan(val)) {
         fputs("null", f);
       } else {
         // Infinity check
