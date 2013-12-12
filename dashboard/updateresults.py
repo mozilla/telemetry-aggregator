@@ -16,6 +16,7 @@ from s3put import s3put
 from results2disk import ChannelVersionManager
 from datetime import datetime
 from time import sleep
+from traceback import print_exc
 
 def s3get_json(s3_bucket, prefix, decompress, fallback_value = None):
     k = s3_bucket.get_key(prefix)
@@ -101,15 +102,19 @@ def updateresults(input_folder, work_folder, bucket, prefix, cache_folder,
         rows = 0
         with open(os.path.join(input_folder, channel_version), 'r') as f:
             for line in f:
-                filePath, blob = line.split('\t')
-                channel_, version_, measure, byDateType = filePath.split('/')
-                blob = json.loads(blob)
-                if channel_ != channel or version_ != version:
-                    print >> sys.stderr, ("Error: Found %s/%s within a %s file!"
-                                        % (channel_, version_, channel_version))
-                    continue
-                manager.merge_in_blob(measure, byDateType, blob)
-                rows += 1
+                try:
+                    filePath, blob = line.split('\t')
+                    channel_, version_, measure, byDateType = filePath.split('/')
+                    blob = json.loads(blob)
+                    if channel_ != channel or version_ != version:
+                        print >> sys.stderr, ("Error: Found %s/%s within a %s file!"
+                                            % (channel_, version_, channel_version))
+                        continue
+                    manager.merge_in_blob(measure, byDateType, blob)
+                    rows += 1
+                except:
+                    print >> sys.stderr, "Error while handling row:"
+                    print_exc(file = sys.stderr)
         manager.flush()
 
         print " - merged rows %i" % rows
