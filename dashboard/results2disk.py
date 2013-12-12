@@ -93,13 +93,13 @@ class ChannelVersionManager:
     def get_next_filter_id(self):
         """ Get the next filter id available """
         if self.max_filter_id is None:
-            def find_max(tree, maxid = 0):
-                m = int(tree['_id'])
-                if maxid < m:
-                    maxid = m
+            def find_max(tree):
+                maxid = int(tree['_id'])
                 for subtree in tree.itervalues():
                     if type(subtree) is dict:
-                        return find_max(subtree, maxid)
+                        m = find_max(subtree)
+                        if maxid < m:
+                            maxid = m
                 return maxid
             self.max_filter_id = find_max(self.filter_tree)
         self.max_filter_id += 1
