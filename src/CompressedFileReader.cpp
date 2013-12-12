@@ -175,8 +175,45 @@ char* CompressedFileReader::nextLine() {
       }
     }
 
+    // Handle non-OK return code
     if (ret != LZMA_OK) {
-      assert(false);
+      const char* msg;
+      switch (ret) {
+        case LZMA_MEM_ERROR:
+          msg = "unable to allocate memory";
+          break;
+        case LZMA_FORMAT_ERROR:
+          msg = "not valid xz/lzma input format";
+          break;
+        case LZMA_BUF_ERROR:
+        case LZMA_DATA_ERROR:
+          msg = "Compressed data file is corrupt";
+          break;
+        case LZMA_OPTIONS_ERROR:
+          msg = "invalid options";
+          break;
+        case LZMA_PROG_ERROR:
+          msg = "unknown error";
+          break;
+        default:
+          assert(false);
+          msg = "invalid error code";
+          break;
+      }
+
+      // Print error message
+      fprintf(
+        stderr,
+        "CompressedFileReader: lzma_code() failed, %s\n",
+        msg
+      );
+
+      // End and release the stream
+      lzma_end(_stream);
+      delete _stream;
+      _stream = nullptr;
+
+      return nullptr;
     }
   }
 }
