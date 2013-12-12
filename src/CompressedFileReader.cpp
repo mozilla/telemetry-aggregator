@@ -15,6 +15,12 @@ CompressedFileReader::CompressedFileReader(FILE* input)
   _outbuf = (uint8_t*)malloc(_size);
   _nextLine = _outbuf;
 
+  if (!input) {
+    _stream = nullptr;
+    fprintf(stderr, "CompressedFileReader: Input FILE* is NULL\n");
+    return;
+  }
+
   // Allocated an initialize stream
   _stream = new lzma_stream;
   *_stream = LZMA_STREAM_INIT;

@@ -9,9 +9,11 @@ mkdir -p input;
 # Copy in test files
 cp ss-ff-n-22.lzma input/ss-ff-n-22.lzma;
 cp ss-ff-n-28.lzma input/ss-ff-n-28.lzma;
+cp corrupted.lzma input/corrupted1.lzma;
+cp corrupted.lzma input/corrupted2.lzma;
 
 # Run tests
-cat input.txt | ../../aggregator -o result.txt;
+valgrind --error-exitcode=1 --leak-check=full ../../aggregator -i corrupted-input.txt -o result.txt;
 
 # Test we have output from both version/channels
 test `cat result.txt | cut -f 1 | cut -d / -f 1,2 | uniq | wc -l` -eq "2";
