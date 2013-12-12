@@ -39,6 +39,7 @@ Features:
 
 MESSAGE_BLOCKS_TO_MERGE = 10 # x 10
 TIME_TO_PUBLISH = 4 * 60 * 60 #s
+MESSAGE_BLOCKS_BEFORE_PUBLISH = 99
 IDLE_WAIT = 60 * 10
 NB_WORKERS = 16
 MERGERESULT_PATH = './build/mergeresults'
@@ -110,7 +111,12 @@ class Aggregator:
             else:
                 sleep(IDLE_WAIT)
             # Publish if necessary
+            publish = False
+            if len(processed_msgblocks) > MESSAGE_BLOCKS_BEFORE_PUBLISH:
+                publish = True
             if (datetime.utcnow() - last_flush).seconds > TIME_TO_PUBLISH:
+                publish = True
+            if publish:
                 # Skip publishing if there are no new results
                 if len(processed_msgblocks) == 0:
                     continue
@@ -122,6 +128,7 @@ class Aggregator:
                 last_flush = datetime.utcnow()
 
     def merge_messages(self, msgs):
+        started = datetime.utcnow()
         # Find results to download
         results = []
         for msg in msgs:
@@ -187,7 +194,7 @@ class Aggregator:
             for path in downloaded_paths:
                 os.remove(path)
 
-            print " - Merged results"
+            print " - Merged results in %i s" % ((datetime.utcnow() - started).seconds)
 
         # Update FILES_PROCESSED and FILES_MISSING
         with open(self.files_missing_path, 'a+') as files_missing:
