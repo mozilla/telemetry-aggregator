@@ -6,7 +6,6 @@
 #include <math.h>
 #include <limits>
 
-using namespace std;
 using namespace rapidjson;
 
 InternedStringContext  Aggregate::_buildIdStringCtx;
@@ -256,9 +255,9 @@ void Aggregate::output(FILE* f) {
         // Infinity check
         if (isinf(val)) {
           if (val > 0) {
-            val = numeric_limits<double>::max();
+            val = std::numeric_limits<double>::max();
           } else {
-            val = -numeric_limits<double>::max();
+            val = -std::numeric_limits<double>::max();
           }
         }
         modp_dtoa2(val, b, 9);

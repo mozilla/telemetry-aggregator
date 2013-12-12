@@ -15,6 +15,8 @@
 #include <string.h>
 #include <string>
 #include <fstream>
+#include <algorithm>
+#include <vector>
 
 using namespace std;
 using namespace rapidjson;
@@ -24,9 +26,15 @@ using namespace rapidjson;
 // Revision string used when missing, this is just a random recent one...
 #define FALLBACK_REVISION "http://hg.mozilla.org/mozilla-central/rev/518f5bff0ae4"
 
+/** Output while merging with input from sorted file */
+void outputWithInput(FILE* f, istream& stream,
+                     const string& channelVersion,
+                     vector<ChannelVersion::Item>& items);
+
 void ResultSet::mergeStream(istream& stream) {
   // Read input line by line
   string line;
+  line.reserve(5 * 1024 * 1024); // just reserve enough memory
   int nb_line = 0;
   while (getline(stream, line)) {
     nb_line++;
@@ -77,8 +85,20 @@ void ResultSet::mergeStream(istream& stream) {
 }
 
 void ResultSet::output(FILE* f) {
+  // Get list of channel versions
+  vector<string> channelVersions;
+  channelVersions.reserve(_channelVersionMap.size());
   for(auto pair : _channelVersionMap) {
-    pair.second->output(f, pair.first);
+    channelVersions.push_back(pair.first);
+  }
+
+  // Sort list of channelVersions
+  sort(channelVersions.begin(), channelVersions.end());
+
+  for(string& channelVersion : channelVersions) {
+    auto it = _channelVersionMap.find(channelVersion);
+    assert(it != _channelVersionMap.end());
+    it->second->output(f, channelVersion);
   }
 }
 
@@ -106,21 +126,134 @@ void ResultSet::updateFileInFolder(string folder) {
     if (access(filename.data(), F_OK) == 0) {
       // If it exists we'll want to merge it into the current data-set
       ifstream file(filename);
-      mergeStream(file);
+      //Load sorted items
+      vector<ChannelVersion::Item> items;
+      pair.second->loadSortedItems(items);
+      string tmp_filename = filename + "_tmp";
+      FILE* f = fopen(tmp_filename.data(), "w");
+      outputWithInput(f, file, pair.first, items);
       file.close();
+      fclose(f);
+
+      // Rename tmp file to new file
+      remove(filename.data());
+      rename(tmp_filename.data(), filename.data());
+
+    } else {
+      // Create channel folder if it doesn't already exists
+      mkdirp((folder + channel).data());
+
+      // Output updated file
+      FILE* f = fopen(filename.data(), "w");
+      if (!f) {
+        fprintf(stderr, "Failed to open '%s'\n", filename.data());
+        continue;
+      }
+      pair.second->output(f, pair.first);
+      fclose(f);
     }
+  }
+}
 
-    // Create channel folder if it doesn't already exists
-    mkdirp((folder + channel).data());
 
-    // Output updated file
-    FILE* f = fopen(filename.data(), "w");
-    if (!f) {
-      fprintf(stderr, "Failed to open '%s'\n", filename.data());
+void outputWithInput(FILE* f, istream& stream, const string& channelVersion,
+                     vector<ChannelVersion::Item>& items) {
+  size_t nextItem = 0;
+
+  // Read input line by line
+  string line;
+  line.reserve(5 * 1024 * 1024); // just reserve enough memory
+  int nb_line = 0;
+  while (getline(stream, line)) {
+    nb_line++;
+
+    // Find tab
+    size_t tab = line.find('\t');
+    if (tab == string::npos) {
+      fprintf(stderr, "No tab on line %i\n", nb_line);
       continue;
     }
-    pair.second->output(f, pair.first);
-    fclose(f);
+
+    // Find second slash
+    size_t slash = line.find('/');
+    if (slash == string::npos) {
+      fprintf(stderr, "No slash on line %i\n", nb_line);
+      continue;
+    }
+    slash = line.find('/', slash + 1);
+    if (slash == string::npos) {
+      fprintf(stderr, "No channel/version on line %i\n", nb_line);
+      continue;
+    }
+
+    // Find filePath
+    string cv       = line.substr(0, slash);
+    string measure  = line.substr(slash + 1, tab - slash - 1);
+
+    // The JSON document
+    const char* payload   = line.data() + tab + 1;
+
+    // These should be the same
+    assert(cv == channelVersion);
+
+    bool written = false;
+    while(!written && nextItem < items.size()) {
+      // Get nextItem
+      ChannelVersion::Item& item = items[nextItem];
+
+      // If we shouldn't output item now, break...
+      if(cv < channelVersion || measure < item.key.asString()) {
+        break; //leaving written == false
+      } else {
+        // If we have a match we should merge them
+        if (cv == channelVersion && measure == item.key.asString()) {
+          // Merge into item
+          written = true;
+          // Parse JSON document
+          Document d;
+          d.Parse<0>(payload);
+
+          // Check that we have an object
+          if (!d.IsObject()) {
+            fprintf(stderr, "JSON root is not an object on line %i\n", nb_line);
+          } else {
+            // Merge into item
+            item.value->mergeJSON(d);
+          }
+        }
+        // output item
+        fputs(channelVersion.data(), f);
+        fputc('/', f);
+        fputs(item.key.data(), f);
+        fputc('\t', f);
+        item.value->output(f);
+        fputc('\n', f);
+        nextItem++;
+      }
+    }
+    // If it wasn't merged and output above, output payload now
+    if(!written) {
+      // Output payload from stream
+      fputs(cv.data(), f);
+      fputc('/', f);
+      fputs(measure.data(), f);
+      fputc('\t', f);
+      fputs(payload, f);
+      fputc('\n', f);
+    }
+  }
+
+  // Output remaining items from cache
+  while(nextItem < items.size()) {
+    ChannelVersion::Item& item = items[nextItem];
+    // Output next item
+    fputs(channelVersion.data(), f);
+    fputc('/', f);
+    fputs(item.key.data(), f);
+    fputc('\t', f);
+    item.value->output(f);
+    fputc('\n', f);
+    nextItem++;
   }
 }
 

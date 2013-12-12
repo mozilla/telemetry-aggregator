@@ -4,6 +4,7 @@
 #include "Aggregate.h"
 
 #include <stdio.h>
+#include <vector>
 
 using namespace std;
 using namespace rapidjson;
@@ -29,16 +30,20 @@ MeasureFile* ChannelVersion::measure(const char* measure) {
 }
 
 void ChannelVersion::output(FILE* f, const string& channelVersion) {
-  auto write = [&channelVersion, &f](InternedString& measure,
-                                     MeasureFile* measureFile) -> void {
+  vector<MeasureFileMap::Item> items;
+  _measureFileMap.getSortedItems(items);
+  for(MeasureFileMap::Item& item : items) {
     fputs(channelVersion.data(), f);
     fputc('/', f);
-    fputs(measure.data(), f);
+    fputs(item.key.data(), f);
     fputc('\t', f);
-    measureFile->output(f);
+    item.value->output(f);
     fputc('\n', f);
-  };
-  _measureFileMap.each(write);
+  }
+}
+
+void ChannelVersion::loadSortedItems(std::vector<Item>& items) {
+  _measureFileMap.getSortedItems(items);
 }
 
 void ChannelVersion::clear() {

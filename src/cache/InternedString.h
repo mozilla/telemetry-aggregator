@@ -5,6 +5,8 @@
 
 #include <string>
 #include <unordered_map>
+#include <algorithm>
+#include <vector>
 
 class InternedStringContext;
 
@@ -193,13 +195,13 @@ class InternedStringMap {
       return strcmp(s1, s2) == 0;
     }
   };
-
+public:
   /** Items stored in map */
   struct Item {
     InternedString  key;
     Value           value;
   };
-
+private:
   /** Internal unordered_map */
   typedef std::unordered_map<const char*, Item, StrHash, StrCmp> Map;
 
@@ -233,6 +235,19 @@ public:
     for(auto it : _map) {
       callback(it.second.key, it.second.value);
     }
+  }
+
+  /** Sorted items added to a vector of items */
+  void getSortedItems(std::vector<Item>& items) {
+    // Get list of items
+    items.reserve(_map.size());
+    for(auto it : _map) {
+      items.push_back(it.second);
+    }
+    // Sort items
+    std::sort(items.begin(), items.end(), [](const Item& a, const Item& b) {
+        return a.key < b.key;
+    });
   }
 
   /** Remove all items */

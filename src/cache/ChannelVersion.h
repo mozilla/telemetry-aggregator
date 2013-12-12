@@ -33,9 +33,13 @@ public:
   /** Output to file */
   void output(FILE* f, const std::string& channelVersion);
 
+  typedef MeasureFileMap::Item Item;
+  void loadSortedItems(std::vector<Item>& items);
+
   void clear();
 
   ~ChannelVersion();
+
 };
 
 
