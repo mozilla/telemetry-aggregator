@@ -393,7 +393,7 @@ void ResultSet::aggregate(const std::string& prefix,
         continue;
       }
       InternedString revision;
-      if (!revField) { 
+      if (revField) {
         if (!revField->value.IsString()) {
           fprintf(stderr, "'revision' in 'info' isn't a string\n");
           continue;
