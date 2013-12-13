@@ -5,11 +5,11 @@
 #include <assert.h>
 #include <string.h>
 
-#define INBUF_SIZE      (1)
+#define INBUF_SIZE      (1024 * 1024)
 
 CompressedFileReader::CompressedFileReader(FILE* input)
  : _input(input), _stream(nullptr), _inbuf(nullptr), _outbuf(nullptr),
-   _size(4096), _nextLine(nullptr) {
+   _size(1024 * 1024), _nextLine(nullptr) {
   // Allocate buffers
   _inbuf  = new uint8_t[INBUF_SIZE];
   _outbuf = (uint8_t*)malloc(_size);
