@@ -161,7 +161,7 @@ void Aggregate::aggregate(const InternedString& revision,
 double simpleMeasureBuckets[] = {
   0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 13, 16, 20, 24, 29, 35, 43, 52, 63, 77, 94,
   115, 140, 171, 209, 255, 311, 379, 462, 564, 688, 839, 1023, 1248, 1522, 1857,
-  265, 2763, 3370, 4111, 5015, 6118, 7463, 9104, 11106, 13548, 16527, 20161,
+  2265, 2763, 3370, 4111, 5015, 6118, 7463, 9104, 11106, 13548, 16527, 20161,
   24593, 30000
 };
 
@@ -189,6 +189,7 @@ void Aggregate::aggregate(double simpleMeasure) {
       // Add one for the index this simple measurement falls into
       for (int i = 49; i >= 0; i--) {
         if (simpleMeasure >= simpleMeasureBuckets[i]) {
+          printf("I found %f >= %f \n", simpleMeasure, simpleMeasureBuckets[i]);
           _values[i] += 1;
           break;
         }
