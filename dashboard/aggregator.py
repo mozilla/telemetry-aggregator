@@ -37,9 +37,9 @@ Features:
 
 """
 
-MESSAGE_BLOCKS_TO_MERGE = 5 # x 10
+MESSAGE_BLOCKS_TO_MERGE = 10 # x 10
 TIME_TO_PUBLISH = 4 * 60 * 60 #s
-MESSAGE_BLOCKS_BEFORE_PUBLISH = 50
+MESSAGE_BLOCKS_BEFORE_PUBLISH = 100
 IDLE_WAIT = 60 * 10
 NB_WORKERS = 16
 MERGERESULT_PATH = './build/mergeresults'
@@ -277,3 +277,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
