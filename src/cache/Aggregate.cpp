@@ -189,7 +189,6 @@ void Aggregate::aggregate(double simpleMeasure) {
       // Add one for the index this simple measurement falls into
       for (int i = 49; i >= 0; i--) {
         if (simpleMeasure >= simpleMeasureBuckets[i]) {
-          printf("I found %f >= %f \n", simpleMeasure, simpleMeasureBuckets[i]);
           _values[i] += 1;
           break;
         }
