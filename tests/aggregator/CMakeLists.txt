@@ -20,7 +20,7 @@ add_test(
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_test(
     NAME aggregator-leak-test
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/aggregator-corrupted-test.sh"
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/aggregator-leak-test.sh"
   )
 else (CMAKE_BUILD_TYPE STREQUAL "Debug")
   message("WARNING: Leak-tests disabled in release build, as release builds")
