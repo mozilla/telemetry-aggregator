@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <string.h>
 
-#define INBUF_SIZE      (1024 * 1024)
+#define INBUF_SIZE      (1024 * 4096)
 
 CompressedFileReader::CompressedFileReader(FILE* input)
  : _input(input), _stream(nullptr), _inbuf(nullptr), _outbuf(nullptr),
@@ -37,7 +37,7 @@ CompressedFileReader::CompressedFileReader(FILE* input)
         msg = "invalid options";
         break;
       case LZMA_PROG_ERROR:
-        msg = "unknown error";
+        msg = "error using liblzma";
         break;
       default:
         assert(false);
@@ -64,6 +64,9 @@ CompressedFileReader::CompressedFileReader(FILE* input)
   _stream->avail_in   = 0;
   _stream->next_out   = _outbuf;
   _stream->avail_out  = _size;
+
+  // By default first action is to run
+  _action = LZMA_RUN;
 }
 
 char* CompressedFileReader::nextLine() {
@@ -72,8 +75,6 @@ char* CompressedFileReader::nextLine() {
   if (!_stream) {
     return nullptr;
   }
-
-  lzma_action action = LZMA_RUN;
 
   // Bring us to a state where: _outbuf == _nextLine
   // do this by moving memory between _nextLine and _stream->next_out
@@ -103,7 +104,7 @@ char* CompressedFileReader::nextLine() {
   // Read until we reach a line break
   while (true) {
     // If there no available input, read from file
-    if (_stream->avail_in == 0 && !feof(_input)) {
+    if (_stream->avail_in == 0 && _action != LZMA_FINISH) {
       _stream->next_in = _inbuf;
       _stream->avail_in = fread(_inbuf, 1, INBUF_SIZE, _input);
 
@@ -124,12 +125,12 @@ char* CompressedFileReader::nextLine() {
 
       // if at end of file, finish decoding, flushing buffers
       if (feof(_input)) {
-        action = LZMA_FINISH;
+        _action = LZMA_FINISH;
       }
     }
 
     // Decode LZMA stream
-    lzma_ret ret = lzma_code(_stream, action);
+    lzma_ret ret = lzma_code(_stream, _action);
 
     // If there is no more output buffer space, or we're at the end of the
     // stream, search for line breaks and return, if any is found
@@ -199,7 +200,7 @@ char* CompressedFileReader::nextLine() {
           msg = "invalid options";
           break;
         case LZMA_PROG_ERROR:
-          msg = "unknown error";
+          msg = "error using liblzma";
           break;
         default:
           assert(false);

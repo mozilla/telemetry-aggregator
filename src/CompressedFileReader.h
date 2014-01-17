@@ -12,6 +12,9 @@ class CompressedFileReader {
   /** lzma decoder stream */
   lzma_stream*  _stream;
 
+  /** Streaming action to take place next */
+  lzma_action   _action;
+
   /** Input buffer, buffering data from input file to decoder */
   uint8_t*      _inbuf;
 
