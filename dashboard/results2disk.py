@@ -4,7 +4,7 @@ except ImportError:
     import json
 from urllib2 import urlopen, HTTPError
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-import sys, os, gzip
+import sys, os, gzip, string
 from utils import mkdirp
 from auxiliary import replace_nan_inf
 
@@ -178,7 +178,13 @@ class ChannelVersionManager:
             "by-build-date" or "by-submission-date"
         """
         # Find most recent: revision, buildId and data-array-length
-        metadata = self.revisions.get(measure, {})
+        metadata = self.revisions.get(measure, None)
+        # If measure isn't seen before, check that it has printable characters
+        # just to be sure :)
+        if metadata is None:
+            if not all(c in string.printable for c in measure):
+                return
+            metadata = {}
         revision = metadata.get('revision', None)
         buildId  = metadata.get('buildId', '')
         length   = metadata.get('length', 0)
