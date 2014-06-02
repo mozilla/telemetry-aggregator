@@ -56,7 +56,7 @@ class Downloader(Process):
                 except:
                     print >> sys.stderr, "Failed to download %s to %s" % msg
                     print_exc(file = sys.stderr)
-                    time.sleep((retries - 1) ** 2)
+                    time.sleep(4 * ((retries - 1) ** 2))
             if retries >= NB_RETRIES:
                 sys.exit(1)
             if self.output_queue != None:
@@ -85,11 +85,25 @@ def s3get(input_bucket, prefix, output_folder, decompress, compress, region,
 
     s3 = s3_connect(region, **aws_cred)
     bucket = s3.get_bucket(input_bucket, validate = False)
-    for k in bucket.list(prefix = prefix):
-        source_prefix = k.key
-        rel_prefix = source_prefix[len(prefix):]
-        target_path = os.path.join(output_folder, *rel_prefix.split('/'))
-        queue.put((source_prefix, target_path))
+    last_key = ''
+    retries = 0
+    while True:
+        try:
+            for k in bucket.list(prefix = prefix, marker = last_key):
+                last_key = k.key
+                source_prefix = k.key
+                rel_prefix = source_prefix[len(prefix):]
+                target_path = os.path.join(output_folder, *rel_prefix.split('/'))
+                queue.put((source_prefix, target_path))
+            break
+        except:
+            print >> sys.stderr, "List operation of %s at %s" % (prefix, last_key)
+            print_exc(file = sys.stderr)
+            retries += 1
+            if retries >= NB_RETRIES:
+                return False
+            else:
+                time.sleep(4 * ((retries - 1) ** 2))
 
     # Add end of queue marker for each worker
     for i in xrange(0, nb_workers):
