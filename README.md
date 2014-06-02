@@ -3,13 +3,13 @@ Telemetry Dashboard
 Telemetry dashboard is an analysis job that aggregates telemetry histograms and
 simple measures, and offers an decent presentation. The default dashboard
 developed in this repository is hosted at
-(telemetry.mozilla.com)[http://telemetry.mozilla.com]. But the aggregated data
+(telemetry.mozilla.org)[http://telemetry.mozilla.org]. But the aggregated data
 is also available for consumption by third-party applications, so you don't need
 to do the aggregation on your own.
 
 Consuming Telemetry Aggregations
 --------------------------------
-Include into your code `http://telemetry.mozilla.com/js/telemetry.js` feel free
+Include into your code `http://telemetry.mozilla.org/js/telemetry.js` feel free
 to use the other modules too.
 Don't go about reading the raw JSON files, they are not designed for human
 consumption!
