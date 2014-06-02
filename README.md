@@ -9,7 +9,7 @@ to do the aggregation on your own.
 
 Consuming Telemetry Aggregations
 --------------------------------
-Include into your code `http://telemetry.mozilla.org/js/telemetry.js` feel free
+Include into your code `http://telemetry.mozilla.org/v1/telemetry.js` feel free
 to use the other modules too.
 Don't go about reading the raw JSON files, they are not designed for human
 consumption!
