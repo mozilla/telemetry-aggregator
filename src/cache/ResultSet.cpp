@@ -17,6 +17,7 @@
 #include <fstream>
 #include <algorithm>
 #include <vector>
+#include <errno.h>
 
 using namespace std;
 using namespace rapidjson;
@@ -335,6 +336,10 @@ void ResultSet::aggregate(const std::string& prefix,
   measureFilename.reserve(2048);
 
   FILE* input = fopen(filename.data(), "r");
+  if (!input) {
+    fprintf(stderr, "Could not read (errno=%d) input file '%s'\n", errno, filename.data());
+  }
+
   {
     // Read file line by line
     CompressedFileReader reader(input);
