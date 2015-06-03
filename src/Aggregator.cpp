@@ -60,6 +60,11 @@ int main(int argc, char *argv[]) {
   string line;
   line.reserve(4096);
   while (getline(*pi, line)) {
+    // Trim carriage returns in case we have Windows style line endings
+    if (!line.empty() && line[line.size() - 1] == '\r') {
+        line.erase(line.size() - 1);
+    }
+
     // Find first tab
     size_t tab = line.find('\t');
     if (tab == string::npos) {
