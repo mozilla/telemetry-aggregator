@@ -1,2 +1,7 @@
 *.pyc
 build/
+externals/
+CMakeFiles/
+*.egg-info
+CMakeCache.txt
+mergeresults.dir
