@@ -40,14 +40,6 @@ The crontab (`/etc/crontab`) should look something like this:
     #
     MAILTO="jopsen@gmail.com"
 
-Notes on setting up telemetry-server:
-
-* `cmake .` in the project root might fail due to an old protobuf version.
-    * To fix this, rebuild `process_incoming/worker/common/message.pb.cc` and `process_incoming/worker/common/message.pb.h` from `process_incoming/worker/common/message.proto` 
-    * `message.proto` is based on the original version at `https://raw.githubusercontent.com/mozilla-services/heka/dev/message/message.proto`, but with the Go-specific parts removed.
-* CPack variables are missing in `process_incoming/worker/common/CMakeLists.txt`.
-    * Add `INCLUDE(CPack)` immediately before `configure_file(TelemetryConstants.in.cpp ${CMAKE_CURRENT_BINARY_DIR}/TelemetryConstants.cpp)` in the file to allow the program to compile.
-
 Notes on configuration:
 
 * AWS configuration needs to be set up: see [http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html] for setting up keys and other settings.
