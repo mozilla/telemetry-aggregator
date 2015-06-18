@@ -12,6 +12,15 @@ For consuming the results of the aggregations, see the [telemetry.js documentati
 
 Avoid using or referencing the JSON data directly, as these may be changed or removed without warning.
 
+Deploying Telemetry Aggregator/Telemetry Server
+-----------------------------------------------
+
+Telemetry Aggregator/Server is written for deployment on AWS.
+
+* Provision an on-demand AWS machine (this document will assume a Ubuntu/Debian-derived medium instance).
+* Copy the contents of `scripts/` onto the server into `~/`.
+* See `~/README.md` for further setup instructions.
+
 Hacking Telemetry Aggregator
 ----------------------------
 To improve the user-interface for telemetry dashboard, see the README for the [Telemetry Dashboard repository](https://github.com/mozilla/telemetry-dashboard).
