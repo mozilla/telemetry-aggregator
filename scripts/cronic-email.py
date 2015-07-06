@@ -2,6 +2,11 @@
 
 import subprocess, sys
 
+if len(sys.argv) === 1:
+    print "Usage: {} SOME_COMMAND SOME_COMMAND_ARGUMENTS".format(sys.argv[0])
+    print "    If SOME_COMMAND exits with a non-zero error code, or results in any output, emails telemetry-alerts@mozilla.com with the exit code and the output."
+    print "    Useful for cron jobs."
+
 import mail
 
 def alert(subject, body):
