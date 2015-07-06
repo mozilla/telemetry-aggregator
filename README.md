@@ -46,5 +46,4 @@ Primary workflow:
     3. Downloads `result.txt` files in parallel.
     4. Updates results on disk.
     5. Publishes updated results in a new subfolder of `current/` on S3, every once in a while.
-    6. Check points all aggregated data to a subfolder of `check-points/` on S3, every once in a while.
-    7. Repeat.
+    6. Repeat.

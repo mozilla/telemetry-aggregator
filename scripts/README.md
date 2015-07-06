@@ -38,7 +38,7 @@ The crontab (`/etc/crontab`) should look something like this:
     47 6    * * 7   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
     52 6    1 * *   root    test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
     #
-    MAILTO="jopsen@gmail.com"
+    MAILTO="telemetry-alerts@mozilla.com"
 
 Notes on configuration:
 
