@@ -37,12 +37,13 @@ Features:
 
 """
 
-MESSAGE_BLOCKS_TO_MERGE = 10 # x 10
-TIME_TO_PUBLISH = 4 * 60 * 60 #s
+MESSAGE_BLOCKS_TO_MERGE = 10 # fetch MESSAGE_BLOCKS_TO_MERGE * MESSAGE_BLOCK_SIZE messages
+TIME_TO_PUBLISH = 4 * 60 * 60 # publish time is 4 hours
 MESSAGE_BLOCKS_BEFORE_PUBLISH = 100
 IDLE_WAIT = 60 * 10
 NB_WORKERS = 16
-MERGERESULT_PATH = './build/mergeresults'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__)) # directory that this file resides in
+MERGERESULT_PATH = os.path.join(SCRIPT_DIR, "..", "mergeresults")
 MESSAGE_BLOCK_SIZE = 10      # max 10 (should be 10)
 
 class Aggregator:
