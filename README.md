@@ -1,5 +1,7 @@
 Telemetry Dashboard
 ===================
+As of 2016-04-13, this code is deprecated. See the [python_mozaggregator](https://github.com/mozilla/python_mozaggregator) repo for the next iteration.
+
 Telemetry dashboard is an analysis job that aggregates telemetry histograms and
 simple measures, and offers an decent presentation. The default dashboard
 developed in this repository is hosted at
