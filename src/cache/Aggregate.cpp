@@ -46,6 +46,7 @@ void Aggregate::mergeJSON(const Value& dump) {
   // Check length of values
   if(length == 0) {
     fprintf(stderr, "Empty 'values' array in dump!\n");
+    return;
   }
 
   // Check that we have doubles
